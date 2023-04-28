@@ -29,7 +29,7 @@ fn solve(input: &str) -> usize {
     let n = input.len();
     let s: Vec<char> = input.chars().collect();
     let mut sorted = vec![0; n];
-    let mut sorted_out = vec![0; n];
+    let mut buf1 = vec![0; n];
     let mut ord = vec![0; n];
     let mut ord_out = vec![0; n];
     sort_init_char(&s, &mut sorted, &mut ord);
@@ -38,8 +38,7 @@ fn solve(input: &str) -> usize {
 
     let mut k = 0;
     while 1 << k < n {
-        sort_step(1 << k, &sorted, &ord, &mut sorted_out, &mut ord_out);
-        swap(&mut sorted, &mut sorted_out);
+        sort_step(1 << k, &mut sorted, &ord, &mut buf1, &mut ord_out);
         swap(&mut ord, &mut ord_out);
         debug!(&sorted; &ord);
         k += 1;
@@ -79,17 +78,17 @@ fn calc_zfun(s: &[char], z: &mut [usize]) {
 
 fn sort_step(
     offset: usize,
-    sorted: &[usize],
+    sorted: &mut [usize],
     ord: &[usize],
-    sorted_out: &mut [usize],
+    sorted_buf: &mut [usize],
     ord_out: &mut [usize],
 ) {
     let n = sorted.len();
-    debug_assert_eq!(n, sorted_out.len());
+    debug_assert_eq!(n, sorted_buf.len());
     debug_assert_eq!(n, ord.len());
     debug_assert_eq!(n, ord_out.len());
 
-    let ord_max = ord[sorted[n - 1]];
+    // let ord_max = ord[sorted[n - 1]];
     let mut count = vec![0; n];
     for i in 0..n {
         count[ord[i]] += 1;
@@ -101,26 +100,25 @@ fn sort_step(
     }
     let end1 = end.clone();
 
-    let mut sort1 = vec![0; n];
     for i in 0..n {
         let o = ord[(i + offset) % n];
-        sort1[end[o]] = i;
+        sorted_buf[end[o]] = i;
         end[o] += 1;
     }
 
     end = end1;
     for i in 0..n {
-        let o = ord[sort1[i]];
-        sorted_out[end[o]] = sort1[i];
+        let o = ord[sorted_buf[i]];
+        sorted[end[o]] = sorted_buf[i];
         end[o] += 1;
     }
 
     // sorted_out.copy_from_slice(sorted);
     // sorted_out.sort_by_key(|&i| (ord[i], ord[(i + offset) % n], i));
-    ord_out[sorted_out[0]] = 0;
+    ord_out[sorted[0]] = 0;
     for i in 1..n {
-        let j = sorted_out[i - 1];
-        let k = sorted_out[i];
+        let j = sorted[i - 1];
+        let k = sorted[i];
         let oj = (ord[j], ord[(j + offset) % n]);
         let ok = (ord[k], ord[(k + offset) % n]);
         ord_out[k] = ord_out[j] + if ok != oj { 1 } else { 0 };
