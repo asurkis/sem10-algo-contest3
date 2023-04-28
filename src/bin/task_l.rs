@@ -2,48 +2,26 @@ use std::mem::swap;
 
 #[cfg(test)]
 macro_rules! debug {
-    ($($val:expr);*) => {
+    ($($($val:expr),+);*) => {
         $(
-            eprintln!(
-                "[{}:{}] {} = {:?}",
-                file!(),
-                line!(),
-                stringify!($val),
-                $val
-            );
+            eprint!("[{}:{}]", file!(), line!());
+            $(
+                eprint!("  {} = {:?}", stringify!($val), $val);
+            )*
+            eprintln!();
         )*
     };
 }
 
 #[cfg(not(test))]
 macro_rules! debug {
-    ($($val:expr);*) => {};
+    ($($($val:expr),+);*) => {};
 }
 
 fn main() {
     let line = std::io::stdin().lines().next().unwrap().unwrap();
-    let answer = baseline(line.trim());
+    let answer = solve(line.trim());
     println!("{answer}");
-}
-
-fn baseline(input: &str) -> usize {
-    let n = input.len();
-    let chars: Vec<char> = input.chars().collect();
-    let mut arr = Vec::with_capacity(n);
-    for i in 0..n {
-        let mut v = Vec::with_capacity(n);
-        for j in 0..n {
-            v.push(chars[(i + j) % n]);
-        }
-        arr.push((v, i));
-    }
-    arr.sort();
-    for i in 0..n {
-        if arr[i].1 == 0 {
-            return i + 1;
-        }
-    }
-    panic!();
 }
 
 fn solve(input: &str) -> usize {
@@ -62,7 +40,9 @@ fn solve(input: &str) -> usize {
         for i in 0..n {
             suffix_pos[sorted[i]] = i;
         }
-        debug!(&sorted; &suffix_pos; &ord_cls);
+        debug!(&sorted);
+        debug!(&suffix_pos);
+        debug!(&ord_cls);
         let mut ord_cls_next = 0;
         let mut eq_begin = 0;
         for i in 1..n {
@@ -95,7 +75,12 @@ fn solve(input: &str) -> usize {
     }
     debug!(&sorted; &ord_cls);
 
-    suffix_pos[0] + 1
+    for i in 0..n {
+        if sorted[i] == 0 {
+            return i + 1;
+        }
+    }
+    panic!();
 }
 
 fn sort_step(
@@ -126,7 +111,7 @@ fn sort_step(
     let nn = 256.max(n);
     let mut count = vec![0; nn];
     for i in 0..m {
-        let j = suffix_pos[(i + offset) % n];
+        let j = suffix_pos[(sorted[i] + offset) % n];
         count[ord_cls[j]] += 1;
     }
 
@@ -140,8 +125,9 @@ fn sort_step(
     *ord_cls_next = ord_n[nn - 1] + if count[nn - 1] != 0 { 1 } else { 0 };
 
     for i in 0..m {
-        let j = suffix_pos[(i + offset) % n];
+        let j = suffix_pos[(sorted[i] + offset) % n];
         let ord = ord_cls[j];
+        debug!(i, j, ord);
         sorted_out[end[ord]] = sorted[i];
         ord_cls_out[end[ord]] = ord_n[ord];
         end[ord] += 1;
@@ -173,6 +159,32 @@ fn sort_init_char(s: &str, sorted: &mut [usize], ord_cls: &mut [usize]) {
 mod tests {
     use super::*;
 
+    fn baseline(input: &str) -> usize {
+        let n = input.len();
+        let chars: Vec<char> = input.chars().collect();
+        let mut arr = Vec::with_capacity(n);
+        for i in 0..n {
+            let mut v = Vec::with_capacity(n);
+            for j in 0..n {
+                v.push(chars[(i + j) % n]);
+            }
+            arr.push((v, i));
+        }
+        arr.sort();
+        for i in 0..n {
+            if arr[i].1 == 0 {
+                return i + 1;
+            }
+        }
+        panic!();
+    }
+
+    fn compare_with_baseline(input: &str) {
+        let expected = baseline(input);
+        let actual = solve(input);
+        assert_eq!(expected, actual);
+    }
+
     #[test]
     fn test_abracadabra() {
         let input = "abracadabra";
@@ -187,5 +199,31 @@ mod tests {
         let expected = 5;
         let actual = solve(input);
         assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test1() {
+        // bbbc
+        // bbcb
+        // bcbb
+        // cbbb
+        compare_with_baseline("bbcb");
+    }
+
+    #[test]
+    fn test2() {
+        // bbcd
+        // bcdb
+        // cdbb
+        // dbbc
+        compare_with_baseline("bcdb");
+    }
+
+    use proptest::prelude::*;
+    proptest! {
+        #[test]
+        fn test_props(input in "[a-z]{10,}") {
+            compare_with_baseline(&input);
+        }
     }
 }
