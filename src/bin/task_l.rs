@@ -1,4 +1,3 @@
-use math::*;
 use std::mem::swap;
 
 #[cfg(test)]
@@ -29,18 +28,27 @@ fn solve(input: &str) -> usize {
     let n = input.len();
     let s: Vec<char> = input.chars().collect();
     let mut sorted = vec![0; n];
-    let mut buf1 = vec![0; n];
     let mut ord = vec![0; n];
     let mut ord_out = vec![0; n];
     sort_init_char(&s, &mut sorted, &mut ord);
 
-    debug!(&sorted; &ord);
+
+    let mut buf1 = vec![0; n];
+    let mut buf2 = vec![0; n];
+    let mut buf3 = vec![0; n];
 
     let mut k = 0;
     while 1 << k < n {
-        sort_step(1 << k, &mut sorted, &ord, &mut buf1, &mut ord_out);
+        sort_step(
+            1 << k,
+            &ord,
+            &mut sorted,
+            &mut ord_out,
+            &mut buf1,
+            &mut buf2,
+            &mut buf3,
+        );
         swap(&mut ord, &mut ord_out);
-        debug!(&sorted; &ord);
         k += 1;
     }
 
@@ -52,53 +60,30 @@ fn solve(input: &str) -> usize {
     panic!();
 }
 
-fn calc_zfun(s: &[char], z: &mut [usize]) {
-    let n = s.len();
-    assert_eq!(n, z.len());
-    z[0] = 0;
-    let mut l = 1;
-    let mut r = 1;
-    z[1] = r - l;
-    for i in 1..n {
-        let mut k = 0;
-        if i < r {
-            // s[i..r] = s[i - l..r - l]
-            k = z[i - l].min(r - i);
-        }
-        while i + k < n && s[k] == s[i + k] {
-            k += 1;
-        }
-        z[i] = k;
-        if i + k > r {
-            l = i;
-            r = i + k;
-        }
-    }
-}
-
 fn sort_step(
     offset: usize,
-    sorted: &mut [usize],
     ord: &[usize],
-    sorted_buf: &mut [usize],
+    sorted: &mut [usize],
     ord_out: &mut [usize],
+    sorted_buf: &mut [usize],
+    count: &mut [usize],
+    end: &mut [usize],
 ) {
     let n = sorted.len();
     debug_assert_eq!(n, sorted_buf.len());
     debug_assert_eq!(n, ord.len());
     debug_assert_eq!(n, ord_out.len());
 
-    // let ord_max = ord[sorted[n - 1]];
-    let mut count = vec![0; n];
+    let ord_max = ord[sorted[n - 1]];
+    count[..=ord_max].fill(0);
     for i in 0..n {
         count[ord[i]] += 1;
     }
 
-    let mut end = vec![0; n];
-    for i in 1..n {
+    end[0] = 0;
+    for i in 1..=ord_max {
         end[i] = end[i - 1] + count[i - 1];
     }
-    let end1 = end.clone();
 
     for i in 0..n {
         let o = ord[(i + offset) % n];
@@ -106,7 +91,11 @@ fn sort_step(
         end[o] += 1;
     }
 
-    end = end1;
+    end[0] = 0;
+    for i in 1..=ord_max {
+        end[i] = end[i - 1] + count[i - 1];
+    }
+
     for i in 0..n {
         let o = ord[sorted_buf[i]];
         sorted[end[o]] = sorted_buf[i];
@@ -122,7 +111,6 @@ fn sort_step(
         let oj = (ord[j], ord[(j + offset) % n]);
         let ok = (ord[k], ord[(k + offset) % n]);
         ord_out[k] = ord_out[j] + if ok != oj { 1 } else { 0 };
-        debug!(j, k, oj, ok, ord_out[k]);
     }
 }
 
@@ -222,6 +210,13 @@ mod tests {
         compare_with_baseline("bcdb");
     }
 
+    #[test]
+    fn test_million() {
+        let input: String = (0..1_000_000).map(|_| 'x').collect();
+        let actual = solve(&input);
+        assert_eq!(1, actual);
+    }
+
     use proptest::prelude::*;
     proptest! {
         #[test]
@@ -253,6 +248,30 @@ mod math {
             1
         } else {
             1 << ilog2(2 * x - 1)
+        }
+    }
+
+    fn calc_zfun(s: &[char], z: &mut [usize]) {
+        let n = s.len();
+        assert_eq!(n, z.len());
+        z[0] = 0;
+        let mut l = 1;
+        let mut r = 1;
+        z[1] = r - l;
+        for i in 1..n {
+            let mut k = 0;
+            if i < r {
+                // s[i..r] = s[i - l..r - l]
+                k = z[i - l].min(r - i);
+            }
+            while i + k < n && s[k] == s[i + k] {
+                k += 1;
+            }
+            z[i] = k;
+            if i + k > r {
+                l = i;
+                r = i + k;
+            }
         }
     }
 }
