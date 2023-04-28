@@ -49,11 +49,13 @@ fn solve(input: &str) -> usize {
         debug!(&ord_cls);
         let mut ord_cls_next = 0;
         let mut eq_begin = 0;
+
+        let mut something_changed = false;
         for i in 1..n {
             if ord_cls[i] == ord_cls[eq_begin] {
                 continue;
             }
-            sort_step(
+            something_changed |= sort_step(
                 1 << k,
                 &suffix_pos,
                 &ord_cls,
@@ -67,7 +69,7 @@ fn solve(input: &str) -> usize {
             );
             eq_begin = i;
         }
-        sort_step(
+        something_changed |= sort_step(
             1 << k,
             &suffix_pos,
             &ord_cls,
@@ -82,6 +84,10 @@ fn solve(input: &str) -> usize {
         swap(&mut sorted, &mut sorted_out);
         swap(&mut ord_cls, &mut ord_cls_out);
         k += 1;
+
+        if !something_changed {
+            break;
+        }
     }
     debug!(&sorted; &ord_cls);
 
@@ -104,7 +110,7 @@ fn sort_step(
     sorted_out: &mut [usize],
     ord_cls_out: &mut [usize],
     ord_cls_next: &mut usize,
-) {
+) -> bool {
     let n = suffix_pos.len();
     let m = sorted.len();
     debug_assert_eq!(n, ord_cls.len());
@@ -115,13 +121,13 @@ fn sort_step(
     debug_assert_eq!(m, sorted_out.len());
     debug_assert_eq!(m, ord_cls_out.len());
     if m == 0 {
-        return;
+        return false;
     }
     if m == 1 {
         sorted_out[0] = sorted[0];
         ord_cls_out[0] = *ord_cls_next;
         *ord_cls_next += 1;
-        return;
+        return false;
     }
 
     for i in 0..n {
@@ -149,6 +155,7 @@ fn sort_step(
         ord_cls_out[end[ord]] = ord_val[ord];
         end[ord] += 1;
     }
+    true
 }
 
 fn sort_init_char(s: &str, sorted: &mut [usize], ord_cls: &mut [usize]) {
