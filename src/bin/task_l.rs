@@ -35,6 +35,10 @@ fn solve(input: &str) -> usize {
     let mut ord_cls_out = vec![0; n];
     let mut sorted_out = vec![0; n];
 
+    let mut count = vec![0; n];
+    let mut end = vec![0; n];
+    let mut ord_val = vec![0; n];
+
     let mut k = 0;
     while 1 << k < n {
         for i in 0..n {
@@ -54,6 +58,9 @@ fn solve(input: &str) -> usize {
                 &suffix_pos,
                 &ord_cls,
                 &sorted[eq_begin..i],
+                &mut count,
+                &mut end,
+                &mut ord_val,
                 &mut sorted_out[eq_begin..i],
                 &mut ord_cls_out[eq_begin..i],
                 &mut ord_cls_next,
@@ -65,6 +72,9 @@ fn solve(input: &str) -> usize {
             &suffix_pos,
             &ord_cls,
             &sorted[eq_begin..n],
+            &mut count,
+            &mut end,
+            &mut ord_val,
             &mut sorted_out[eq_begin..n],
             &mut ord_cls_out[eq_begin..n],
             &mut ord_cls_next,
@@ -88,6 +98,9 @@ fn sort_step(
     suffix_pos: &[usize],
     ord_cls: &[usize],
     sorted: &[usize],
+    count: &mut [usize],
+    end: &mut [usize],
+    ord_val: &mut [usize],
     sorted_out: &mut [usize],
     ord_cls_out: &mut [usize],
     ord_cls_next: &mut usize,
@@ -95,6 +108,9 @@ fn sort_step(
     let n = suffix_pos.len();
     let m = sorted.len();
     debug_assert_eq!(n, ord_cls.len());
+    debug_assert_eq!(n, count.len());
+    debug_assert_eq!(n, end.len());
+    debug_assert_eq!(n, ord_val.len());
     debug_assert_eq!(m, sorted.len());
     debug_assert_eq!(m, sorted_out.len());
     debug_assert_eq!(m, ord_cls_out.len());
@@ -108,44 +124,53 @@ fn sort_step(
         return;
     }
 
-    let nn = 256.max(n);
-    let mut count = vec![0; nn];
+    for i in 0..n {
+        count[i] = 0;
+    }
     for i in 0..m {
         let j = suffix_pos[(sorted[i] + offset) % n];
         count[ord_cls[j]] += 1;
     }
 
-    let mut end = vec![0; nn];
-    let mut ord_n = vec![*ord_cls_next; nn];
-    for i in 0..nn - 1 {
+    end[0] = 0;
+    ord_val[0] = *ord_cls_next;
+    for i in 0..n - 1 {
         end[i + 1] = end[i] + count[i];
-        ord_n[i + 1] = ord_n[i] + if count[i] != 0 { 1 } else { 0 };
+        ord_val[i + 1] = ord_val[i] + if count[i] != 0 { 1 } else { 0 };
     }
-    debug_assert_eq!(m, end[nn - 1] + count[nn - 1]);
-    *ord_cls_next = ord_n[nn - 1] + if count[nn - 1] != 0 { 1 } else { 0 };
+    debug_assert_eq!(m, end[n - 1] + count[n - 1]);
+    *ord_cls_next = ord_val[n - 1] + if count[n - 1] != 0 { 1 } else { 0 };
 
     for i in 0..m {
         let j = suffix_pos[(sorted[i] + offset) % n];
         let ord = ord_cls[j];
         debug!(i, j, ord);
         sorted_out[end[ord]] = sorted[i];
-        ord_cls_out[end[ord]] = ord_n[ord];
+        ord_cls_out[end[ord]] = ord_val[ord];
         end[ord] += 1;
     }
 }
 
 fn sort_init_char(s: &str, sorted: &mut [usize], ord_cls: &mut [usize]) {
+    let n = s.len();
     // stable count sort by first character
     let mut char_count = vec![0; 256];
     for c in s.chars() {
         char_count[c as usize] += 1;
     }
     let mut char_begin = vec![0; 256];
+    let mut next_ord_cls = 0;
     for i in 0..255 {
         char_begin[i + 1] = char_begin[i] + char_count[i];
-        for j in char_begin[i]..char_begin[i + 1] {
-            ord_cls[j] = i;
+        if char_count[i] != 0 {
+            for j in char_begin[i]..char_begin[i + 1] {
+                ord_cls[j] = next_ord_cls;
+            }
+            next_ord_cls += 1;
         }
+    }
+    for j in char_begin[255]..n {
+        ord_cls[j] = next_ord_cls;
     }
     let mut char_end = char_begin.clone();
     for (i, c) in s.chars().enumerate() {
