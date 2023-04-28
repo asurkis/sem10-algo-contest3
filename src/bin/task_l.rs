@@ -1,3 +1,4 @@
+use math::*;
 use std::mem::swap;
 
 #[cfg(test)]
@@ -26,70 +27,26 @@ fn main() {
 
 fn solve(input: &str) -> usize {
     let n = input.len();
-
+    let s: Vec<char> = input.chars().collect();
     let mut sorted = vec![0; n];
-    let mut ord_cls = vec![0; n];
-    sort_init_char(input, &mut sorted, &mut ord_cls);
-
-    let mut suffix_pos = vec![0; n];
-    let mut ord_cls_out = vec![0; n];
     let mut sorted_out = vec![0; n];
+    let mut ord = vec![0; n];
+    let mut ord_out = vec![0; n];
+    sort_init_char(&s, &mut sorted, &mut ord);
 
-    let mut count = vec![0; n];
-    let mut end = vec![0; n];
-    let mut ord_val = vec![0; n];
+    debug!(&sorted; &ord);
 
     let mut k = 0;
     while 1 << k < n {
-        for i in 0..n {
-            suffix_pos[sorted[i]] = i;
-        }
-        debug!(&sorted);
-        debug!(&suffix_pos);
-        debug!(&ord_cls);
-        let mut ord_cls_next = 0;
-        let mut eq_begin = 0;
-
-        let mut something_changed = false;
-        for i in 1..n {
-            if ord_cls[i] == ord_cls[eq_begin] {
-                continue;
-            }
-            something_changed |= sort_step(
-                1 << k,
-                &suffix_pos,
-                &ord_cls,
-                &sorted[eq_begin..i],
-                &mut count,
-                &mut end,
-                &mut ord_val,
-                &mut sorted_out[eq_begin..i],
-                &mut ord_cls_out[eq_begin..i],
-                &mut ord_cls_next,
-            );
-            eq_begin = i;
-        }
-        something_changed |= sort_step(
-            1 << k,
-            &suffix_pos,
-            &ord_cls,
-            &sorted[eq_begin..n],
-            &mut count,
-            &mut end,
-            &mut ord_val,
-            &mut sorted_out[eq_begin..n],
-            &mut ord_cls_out[eq_begin..n],
-            &mut ord_cls_next,
-        );
+        sort_step(1 << k, &sorted, &ord, &mut sorted_out, &mut ord_out);
         swap(&mut sorted, &mut sorted_out);
-        swap(&mut ord_cls, &mut ord_cls_out);
+        swap(&mut ord, &mut ord_out);
+        debug!(&sorted; &ord);
+        let mut ord_sorted = ord.clone();
+        ord_sorted.sort();
+        debug!(ord_sorted);
         k += 1;
-
-        if !something_changed {
-            break;
-        }
     }
-    debug!(&sorted; &ord_cls);
 
     for i in 0..n {
         if sorted[i] == 0 {
@@ -99,91 +56,107 @@ fn solve(input: &str) -> usize {
     panic!();
 }
 
+fn calc_zfun(s: &[char], z: &mut [usize]) {
+    let n = s.len();
+    assert_eq!(n, z.len());
+    z[0] = 0;
+    let mut l = 1;
+    let mut r = 1;
+    z[1] = r - l;
+    for i in 1..n {
+        let mut k = 0;
+        if i < r {
+            // s[i..r] = s[i - l..r - l]
+            k = z[i - l].min(r - i);
+        }
+        while i + k < n && s[k] == s[i + k] {
+            k += 1;
+        }
+        z[i] = k;
+        if i + k > r {
+            l = i;
+            r = i + k;
+        }
+    }
+}
+
 fn sort_step(
     offset: usize,
-    suffix_pos: &[usize],
-    ord_cls: &[usize],
     sorted: &[usize],
-    count: &mut [usize],
-    end: &mut [usize],
-    ord_val: &mut [usize],
+    ord: &[usize],
     sorted_out: &mut [usize],
-    ord_cls_out: &mut [usize],
-    ord_cls_next: &mut usize,
-) -> bool {
-    let n = suffix_pos.len();
-    let m = sorted.len();
-    debug_assert_eq!(n, ord_cls.len());
-    debug_assert_eq!(n, count.len());
-    debug_assert_eq!(n, end.len());
-    debug_assert_eq!(n, ord_val.len());
-    debug_assert_eq!(m, sorted.len());
-    debug_assert_eq!(m, sorted_out.len());
-    debug_assert_eq!(m, ord_cls_out.len());
-    if m == 0 {
-        return false;
+    ord_out: &mut [usize],
+) {
+    let n = sorted.len();
+    debug_assert_eq!(n, sorted_out.len());
+    debug_assert_eq!(n, ord.len());
+    debug_assert_eq!(n, ord_out.len());
+
+    sorted_out.copy_from_slice(sorted);
+    let tmp: Vec<_> = sorted_out
+        .iter()
+        .map(|&i| (i, (i + offset) % n, ord[i], ord[(i + offset) % n]))
+        .collect();
+    debug!(&tmp);
+    sorted_out.sort_by_key(|&i| (ord[i], ord[(i + offset) % n], i));
+    let tmp: Vec<_> = sorted_out
+        .iter()
+        .map(|&i| (i, (i + offset) % n, ord[i], ord[(i + offset) % n]))
+        .collect();
+    debug!(&tmp);
+    ord_out[sorted_out[0]] = 0;
+    for i in 1..n {
+        let j = sorted_out[i - 1];
+        let k = sorted_out[i];
+        let oj = (ord[j], ord[(j + offset) % n]);
+        let ok = (ord[k], ord[(k + offset) % n]);
+        ord_out[k] = ord_out[j] + if ok != oj { 1 } else { 0 };
+        debug!(j, k, oj, ok, ord_out[k]);
     }
-    if m == 1 {
-        sorted_out[0] = sorted[0];
-        ord_cls_out[0] = *ord_cls_next;
-        *ord_cls_next += 1;
-        return false;
+    /*
+    let mut count = vec![0; n];
+    for i in 0..n {
+        count[ord[i]] += 1;
+    }
+
+    let mut end = Vec::with_capacity(n);
+    end.push(0);
+    for i in 0..n - 1 {
+        end.push(end[i] + count[i]);
+    }
+
+    let mut sort1 = vec![0; n];
+    for i in 0..n {
+        let j = (sorted[i] + offset) % n;
+        let o = ord[j];
+        sort1[end[o]] = sorted[i];
     }
 
     for i in 0..n {
-        count[i] = 0;
+        let j = sort1[i];
+        sorted_out[end[j]];
     }
-    for i in 0..m {
-        let j = suffix_pos[(sorted[i] + offset) % n];
-        count[ord_cls[j]] += 1;
-    }
-
-    end[0] = 0;
-    ord_val[0] = *ord_cls_next;
-    for i in 0..n - 1 {
-        end[i + 1] = end[i] + count[i];
-        ord_val[i + 1] = ord_val[i] + if count[i] != 0 { 1 } else { 0 };
-    }
-    debug_assert_eq!(m, end[n - 1] + count[n - 1]);
-    *ord_cls_next = ord_val[n - 1] + if count[n - 1] != 0 { 1 } else { 0 };
-
-    for i in 0..m {
-        let j = suffix_pos[(sorted[i] + offset) % n];
-        let ord = ord_cls[j];
-        debug!(i, j, ord);
-        sorted_out[end[ord]] = sorted[i];
-        ord_cls_out[end[ord]] = ord_val[ord];
-        end[ord] += 1;
-    }
-    true
+    */
 }
 
-fn sort_init_char(s: &str, sorted: &mut [usize], ord_cls: &mut [usize]) {
+fn sort_init_char(s: &[char], sorted_out: &mut [usize], ord_out: &mut [usize]) {
     let n = s.len();
     // stable count sort by first character
     let mut char_count = vec![0; 256];
-    for c in s.chars() {
+    for &c in s {
         char_count[c as usize] += 1;
     }
-    let mut char_begin = vec![0; 256];
-    let mut next_ord_cls = 0;
+    let mut char_end = vec![0; 256];
+    let mut ord_val = vec![0; 256];
     for i in 0..255 {
-        char_begin[i + 1] = char_begin[i] + char_count[i];
-        if char_count[i] != 0 {
-            for j in char_begin[i]..char_begin[i + 1] {
-                ord_cls[j] = next_ord_cls;
-            }
-            next_ord_cls += 1;
-        }
+        char_end[i + 1] = char_end[i] + char_count[i];
+        ord_val[i + 1] = ord_val[i] + if char_count[i] != 0 { 1 } else { 0 };
     }
-    for j in char_begin[255]..n {
-        ord_cls[j] = next_ord_cls;
-    }
-    let mut char_end = char_begin.clone();
-    for (i, c) in s.chars().enumerate() {
-        let ce = &mut char_end[c as usize];
-        sorted[*ce] = i;
-        *ce += 1;
+    for i in 0..n {
+        let cu = s[i] as usize;
+        sorted_out[char_end[cu]] = i;
+        ord_out[i] = ord_val[cu];
+        char_end[cu] += 1;
     }
 }
 
@@ -219,6 +192,17 @@ mod tests {
 
     #[test]
     fn test_abracadabra() {
+        // | 10 -> 0 |  0 ->  | aabracadabr
+        // |  0 -> 1 |  1 ->  | abracadabra
+        // |  7 -> 1 |  8 ->  | abraabracad
+        // |  3 -> 2 |  4 ->  | acadabraabr
+        // |  5 -> 3 |  6 ->  | adabraabrac
+        // |  1 -> 4 |  2 ->  | bracadabraa
+        // |  8 -> 4 |  9 ->  | braabracada
+        // |  4 -> 5 |  5 ->  | cadabraabra
+        // |  6 -> 6 |  7 ->  | dabraabraca
+        // |  2 -> 7 |  3 ->  | racadabraab
+        // |  9 -> 7 | 10 ->  | raabracadab
         let input = "abracadabra";
         let expected = 3;
         let actual = solve(input);
@@ -256,6 +240,32 @@ mod tests {
         #[test]
         fn test_props(input in "[a-z]{10,}") {
             compare_with_baseline(&input);
+        }
+    }
+}
+
+#[allow(unused)]
+mod math {
+    const fn ilog2_acc(x: usize, acc: u32) -> u32 {
+        if x == 1 {
+            acc
+        } else {
+            ilog2_acc(x >> 1, acc + 1)
+        }
+    }
+
+    pub const fn ilog2(x: usize) -> u32 {
+        if x == 0 {
+            panic!();
+        }
+        ilog2_acc(x, 0)
+    }
+
+    pub const fn ceil2(x: usize) -> usize {
+        if x == 0 {
+            1
+        } else {
+            1 << ilog2(2 * x - 1)
         }
     }
 }
