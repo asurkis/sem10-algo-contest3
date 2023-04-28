@@ -32,11 +32,11 @@ fn solve(input: &str) -> usize {
     let mut ord_out = vec![0; n];
     sort_init_char(&s, &mut sorted, &mut ord);
 
-
     let mut buf1 = vec![0; n];
     let mut buf2 = vec![0; n];
     let mut buf3 = vec![0; n];
 
+    let mut sorted_prev = sorted.clone();
     let mut k = 0;
     while 1 << k < n {
         sort_step(
@@ -49,6 +49,10 @@ fn solve(input: &str) -> usize {
             &mut buf3,
         );
         swap(&mut ord, &mut ord_out);
+        if sorted == sorted_prev {
+            break;
+        }
+        sorted_prev.copy_from_slice(&sorted);
         k += 1;
     }
 
@@ -62,22 +66,22 @@ fn solve(input: &str) -> usize {
 
 fn sort_step(
     offset: usize,
-    ord: &[usize],
-    sorted: &mut [usize],
-    ord_out: &mut [usize],
-    sorted_buf: &mut [usize],
-    count: &mut [usize],
-    end: &mut [usize],
+    ord: &[u32],
+    sorted: &mut [u32],
+    ord_out: &mut [u32],
+    sorted_buf: &mut [u32],
+    count: &mut [u32],
+    end: &mut [u32],
 ) {
     let n = sorted.len();
     debug_assert_eq!(n, sorted_buf.len());
     debug_assert_eq!(n, ord.len());
     debug_assert_eq!(n, ord_out.len());
 
-    let ord_max = ord[sorted[n - 1]];
+    let ord_max = ord[sorted[n - 1] as usize] as usize;
     count[..=ord_max].fill(0);
     for i in 0..n {
-        count[ord[i]] += 1;
+        count[ord[i] as usize] += 1;
     }
 
     end[0] = 0;
@@ -86,8 +90,8 @@ fn sort_step(
     }
 
     for i in 0..n {
-        let o = ord[(i + offset) % n];
-        sorted_buf[end[o]] = i;
+        let o = ord[(i + offset) % n] as usize;
+        sorted_buf[end[o] as usize] = i as u32;
         end[o] += 1;
     }
 
@@ -97,24 +101,24 @@ fn sort_step(
     }
 
     for i in 0..n {
-        let o = ord[sorted_buf[i]];
-        sorted[end[o]] = sorted_buf[i];
+        let o = ord[sorted_buf[i] as usize] as usize;
+        sorted[end[o] as usize] = sorted_buf[i];
         end[o] += 1;
     }
 
     // sorted_out.copy_from_slice(sorted);
     // sorted_out.sort_by_key(|&i| (ord[i], ord[(i + offset) % n], i));
-    ord_out[sorted[0]] = 0;
+    ord_out[sorted[0] as usize] = 0;
     for i in 1..n {
-        let j = sorted[i - 1];
-        let k = sorted[i];
+        let j = sorted[i - 1] as usize;
+        let k = sorted[i] as usize;
         let oj = (ord[j], ord[(j + offset) % n]);
         let ok = (ord[k], ord[(k + offset) % n]);
         ord_out[k] = ord_out[j] + if ok != oj { 1 } else { 0 };
     }
 }
 
-fn sort_init_char(s: &[char], sorted_out: &mut [usize], ord_out: &mut [usize]) {
+fn sort_init_char(s: &[char], sorted_out: &mut [u32], ord_out: &mut [u32]) {
     let n = s.len();
     // stable count sort by first character
     let mut char_count = vec![0; 256];
@@ -129,7 +133,7 @@ fn sort_init_char(s: &[char], sorted_out: &mut [usize], ord_out: &mut [usize]) {
     }
     for i in 0..n {
         let cu = s[i] as usize;
-        sorted_out[char_end[cu]] = i;
+        sorted_out[char_end[cu]] = i as u32;
         ord_out[i] = ord_val[cu];
         char_end[cu] += 1;
     }
