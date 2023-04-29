@@ -4,6 +4,23 @@ fn main() {
     debug!(1; 2);
 }
 
+fn solve(m: usize, colors: &[usize]) -> Vec<usize> {
+    todo!()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test1() {
+        let colors = vec![1, 1, 2, 2, 1, 1];
+        let expected = vec![6, 5, 3];
+        let actual = solve(2, &colors);
+        assert_eq!(expected, actual);
+    }
+}
+
 #[allow(unused)]
 mod util {
     #[cfg(test)]
