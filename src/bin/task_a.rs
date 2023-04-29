@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use util::*;
 
 fn main() {
     let mut lines = std::io::stdin().lines().map(|s| {
@@ -55,96 +55,13 @@ fn solve(n: usize, m: usize, edges: &[Vec<usize>]) -> Vec<[usize; 2]> {
 
     let mut answer = Vec::new();
     for i in init_edges {
-        let e = g.edge_heap[i];
+        let e = g.get_edge(i);
         if e.capacity != 0 {
             continue;
         }
         answer.push([e.node1 + 1, e.node2 - n + 1]);
     }
     answer
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct Edge {
-    node1: usize,
-    node2: usize,
-    capacity: u32,
-}
-
-#[derive(Debug, Clone)]
-struct Graph {
-    edge_heap: Vec<Edge>,
-    edge_idx: Vec<Vec<usize>>,
-}
-
-impl Graph {
-    fn new(n_nodes: usize) -> Self {
-        Self {
-            edge_heap: Vec::new(),
-            edge_idx: vec![Vec::new(); n_nodes],
-        }
-    }
-
-    fn n_nodes(&self) -> usize {
-        self.edge_idx.len()
-    }
-
-    fn n_edges(&self) -> usize {
-        self.edge_heap.len()
-    }
-
-    fn add_edge(&mut self, node1: usize, node2: usize) -> usize {
-        let pos = self.n_edges();
-        self.edge_idx[node1].push(pos);
-        self.edge_idx[node2].push(pos + 1);
-        self.edge_heap.push(Edge {
-            node1,
-            node2,
-            capacity: 1,
-        });
-        self.edge_heap.push(Edge {
-            node1: node2,
-            node2: node1,
-            capacity: 0,
-        });
-        pos
-    }
-
-    fn mark_subflow(&mut self, s: usize, t: usize) -> bool {
-        debug_assert_ne!(s, t);
-        let mut last_edge = vec![usize::MAX; self.n_nodes()];
-        let mut queue = VecDeque::new();
-        queue.push_back(s);
-        last_edge[s] = usize::MAX - 1;
-        while !queue.is_empty() {
-            let v = queue.pop_front().unwrap();
-            for &ei in &self.edge_idx[v] {
-                let e = self.edge_heap[ei];
-                if e.capacity == 0 {
-                    continue;
-                }
-                if last_edge[e.node2] != usize::MAX {
-                    continue;
-                }
-                last_edge[e.node2] = ei;
-                queue.push_back(e.node2);
-            }
-        }
-
-        if last_edge[t] == usize::MAX {
-            return false;
-        }
-
-        let mut pos = t;
-        while pos != s {
-            let ei = last_edge[pos];
-            let cap = self.edge_heap[ei].capacity;
-            self.edge_heap[ei].capacity -= cap;
-            self.edge_heap[ei ^ 1].capacity += cap;
-            pos = self.edge_heap[ei].node1;
-        }
-        true
-    }
 }
 
 #[cfg(test)]
@@ -197,6 +114,8 @@ mod tests {
 
 #[allow(unused)]
 mod util {
+    use std::collections::VecDeque;
+
     #[cfg(test)]
     #[macro_export]
     macro_rules! debug {
@@ -261,6 +180,93 @@ mod util {
                 l = i;
                 r = i + k;
             }
+        }
+    }
+
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    pub struct Edge {
+        pub node1: usize,
+        pub node2: usize,
+        pub capacity: u32,
+    }
+
+    #[derive(Debug, Clone)]
+    pub struct Graph {
+        edge_heap: Vec<Edge>,
+        edge_idx: Vec<Vec<usize>>,
+    }
+
+    impl Graph {
+        pub fn new(n_nodes: usize) -> Self {
+            Self {
+                edge_heap: Vec::new(),
+                edge_idx: vec![Vec::new(); n_nodes],
+            }
+        }
+
+        pub fn n_nodes(&self) -> usize {
+            self.edge_idx.len()
+        }
+
+        pub fn n_edges(&self) -> usize {
+            self.edge_heap.len()
+        }
+
+        pub fn add_edge(&mut self, node1: usize, node2: usize) -> usize {
+            let pos = self.n_edges();
+            self.edge_idx[node1].push(pos);
+            self.edge_idx[node2].push(pos + 1);
+            self.edge_heap.push(Edge {
+                node1,
+                node2,
+                capacity: 1,
+            });
+            self.edge_heap.push(Edge {
+                node1: node2,
+                node2: node1,
+                capacity: 0,
+            });
+            pos
+        }
+
+        pub fn get_edge(&self, i: usize) -> Edge {
+            self.edge_heap[i]
+        }
+
+        pub fn mark_subflow(&mut self, s: usize, t: usize) -> bool {
+            debug_assert_ne!(s, t);
+            let mut last_edge = vec![usize::MAX; self.n_nodes()];
+            let mut queue = VecDeque::new();
+            queue.push_back(s);
+            last_edge[s] = usize::MAX - 1;
+            while !queue.is_empty() {
+                let v = queue.pop_front().unwrap();
+                for &ei in &self.edge_idx[v] {
+                    let e = self.edge_heap[ei];
+                    if e.capacity == 0 {
+                        continue;
+                    }
+                    if last_edge[e.node2] != usize::MAX {
+                        continue;
+                    }
+                    last_edge[e.node2] = ei;
+                    queue.push_back(e.node2);
+                }
+            }
+
+            if last_edge[t] == usize::MAX {
+                return false;
+            }
+
+            let mut pos = t;
+            while pos != s {
+                let ei = last_edge[pos];
+                let cap = self.edge_heap[ei].capacity;
+                self.edge_heap[ei].capacity -= cap;
+                self.edge_heap[ei ^ 1].capacity += cap;
+                pos = self.edge_heap[ei].node1;
+            }
+            true
         }
     }
 }
