@@ -19,13 +19,12 @@ fn main() {
 fn solve(zfun: &[usize]) -> Vec<usize> {
     let n = zfun.len();
     let mut pfun = vec![0; n];
-    for i in 0..n {
-        for j in 0..i {
-            if j + zfun[j + 1] < i {
-                continue;
-            }
-            pfun[i] = pfun[i].max(i - j);
+    let mut j = 0;
+    for i in 1..n {
+        while j < i && j + zfun[j + 1] < i {
+            j += 1;
         }
+        pfun[i] = i - j;
     }
     pfun
 }
@@ -33,6 +32,26 @@ fn solve(zfun: &[usize]) -> Vec<usize> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn baseline(zfun: &[usize]) -> Vec<usize> {
+        let n = zfun.len();
+        let mut pfun = vec![0; n];
+        for i in 0..n {
+            for j in 0..i {
+                if j + zfun[j + 1] < i {
+                    continue;
+                }
+                pfun[i] = pfun[i].max(i - j);
+            }
+        }
+        pfun
+    }
+
+    fn compare_with_baseline(zfun: &[usize]) {
+        let expected = baseline(zfun);
+        let actual = solve(zfun);
+        assert_eq!(expected, actual);
+    }
 
     #[test]
     fn test1() {
