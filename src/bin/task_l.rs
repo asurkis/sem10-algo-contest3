@@ -1,23 +1,5 @@
 use std::mem::swap;
 
-#[cfg(test)]
-macro_rules! debug {
-    ($($($val:expr),+);*) => {
-        $(
-            eprint!("[{}:{}]", file!(), line!());
-            $(
-                eprint!("  {} = {:?}", stringify!($val), $val);
-            )*
-            eprintln!();
-        )*
-    };
-}
-
-#[cfg(not(test))]
-macro_rules! debug {
-    ($($($val:expr),+);*) => {};
-}
-
 fn main() {
     let line = std::io::stdin().lines().next().unwrap().unwrap();
     let answer = solve(line.trim());
@@ -231,7 +213,25 @@ mod tests {
 }
 
 #[allow(unused)]
-mod math {
+mod util {
+    #[cfg(test)]
+    macro_rules! debug {
+        ($($($val:expr),+);*) => {
+            $(
+                eprint!("[{}:{}]", file!(), line!());
+                $(
+                    eprint!("  {} = {:?}", stringify!($val), $val);
+                )*
+                eprintln!();
+            )*
+        };
+    }
+
+    #[cfg(not(test))]
+    macro_rules! debug {
+        ($($($val:expr),+);*) => {};
+    }
+
     const fn ilog2_acc(x: usize, acc: u32) -> u32 {
         if x == 1 {
             acc
