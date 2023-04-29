@@ -215,6 +215,7 @@ mod tests {
 #[allow(unused)]
 mod util {
     #[cfg(test)]
+    #[macro_export]
     macro_rules! debug {
         ($($($val:expr),+);*) => {
             $(
@@ -228,6 +229,7 @@ mod util {
     }
 
     #[cfg(not(test))]
+    #[macro_export]
     macro_rules! debug {
         ($($($val:expr),+);*) => {};
     }
