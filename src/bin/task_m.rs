@@ -1,11 +1,46 @@
-use util::*;
-
 fn main() {
-    debug!(1; 2);
+    let mut lines = std::io::stdin().lines().map(|s| {
+        s.unwrap()
+            .trim()
+            .split_whitespace()
+            .map(|x| x.parse().unwrap())
+            .collect::<Vec<usize>>()
+    });
+    let nm = lines.next().unwrap();
+    let m = nm[0];
+    let cubes = lines.next().unwrap();
+    let answer = solve(m, &cubes);
+    for x in answer {
+        print!("{x} ");
+    }
+    println!();
 }
 
-fn solve(m: usize, colors: &[usize]) -> Vec<usize> {
-    todo!()
+fn solve(_m: usize, cubes: &[usize]) -> Vec<usize> {
+    let n = cubes.len();
+    let mut max_paly = vec![0; n];
+    for i in 0..n {
+        for j in 0..i {
+            if i + j >= n {
+                break;
+            }
+            if cubes[i + j] == cubes[i - j - 1] {
+                max_paly[i] += 1;
+            } else {
+                break;
+            }
+        }
+    }
+
+    debug!(&max_paly);
+
+    let mut answer = vec![];
+    for i in 0..n {
+        if max_paly[i] == i {
+            answer.push(n - i);
+        }
+    }
+    answer
 }
 
 #[cfg(test)]
@@ -14,13 +49,16 @@ mod tests {
 
     #[test]
     fn test1() {
-        let colors = vec![1, 1, 2, 2, 1, 1];
+        // 6 2
+        // 1 1 2 2 1 1
+        // ========
+        // 6 5 3
+        let cubes = vec![1, 1, 2, 2, 1, 1];
+        let actual = solve(2, &cubes);
         let expected = vec![6, 5, 3];
-        let actual = solve(2, &colors);
         assert_eq!(expected, actual);
     }
 }
-
 #[allow(unused)]
 mod util {
     #[cfg(test)]
@@ -66,7 +104,7 @@ mod util {
         }
     }
 
-    fn calc_zfun(s: &[char], z: &mut [usize]) {
+    pub fn calc_zfun(s: &[char], z: &mut [usize]) {
         let n = s.len();
         assert_eq!(n, z.len());
         z[0] = 0;
