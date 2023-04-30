@@ -73,7 +73,7 @@ fn solve(orders: &[Order]) -> usize {
         h.add_edge(n + i, t);
     }
 
-    while h.mark_subflow(s, t) {}
+    while h.mark_subflow(s, t) != 0 {}
 
     let mut g = Graph::new(n);
     for ei in og_edges {
@@ -89,7 +89,7 @@ fn solve(orders: &[Order]) -> usize {
         if reachable[i] {
             continue;
         }
-        g.mark_reachable(i, &mut reachable);
+        g.mark_reachable_any(i, &mut reachable);
         answer += 1;
     }
 
@@ -200,6 +200,8 @@ mod util {
         }
     }
 
+    pub type Capacity = u32;
+
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub struct Edge {
         pub node1: usize,
@@ -232,18 +234,21 @@ mod util {
         }
 
         pub fn add_edge(&mut self, node1: usize, node2: usize) -> usize {
+            self.add_edge_pair(node1, node2, 1)
+        }
+
+        pub fn add_edge_pair(&mut self, node1: usize, node2: usize, capacity: Capacity) -> usize {
+            self.add_one_edge(node2, node1, 0);
+            self.add_one_edge(node1, node2, capacity)
+        }
+
+        pub fn add_one_edge(&mut self, node1: usize, node2: usize, capacity: Capacity) -> usize {
             let pos = self.n_edges();
             self.edge_idx[node1].push(pos);
-            self.edge_idx[node2].push(pos + 1);
             self.edge_heap.push(Edge {
                 node1,
                 node2,
-                capacity: 1,
-            });
-            self.edge_heap.push(Edge {
-                node1: node2,
-                node2: node1,
-                capacity: 0,
+                capacity,
             });
             pos
         }
@@ -252,7 +257,7 @@ mod util {
             self.edge_heap[i]
         }
 
-        pub fn mark_subflow(&mut self, s: usize, t: usize) -> bool {
+        pub fn mark_subflow(&mut self, s: usize, t: usize) -> Capacity {
             debug_assert_ne!(s, t);
             let last_edge = &mut self.last_edge_buf;
             last_edge.fill(usize::MAX);
@@ -275,27 +280,35 @@ mod util {
             }
 
             if last_edge[t] == usize::MAX {
-                return false;
+                return 0;
+            }
+
+            let mut flow = Capacity::MAX;
+            let mut pos = t;
+            while pos != s {
+                let ei = last_edge[pos];
+                let cap = self.edge_heap[ei].capacity;
+                flow = flow.min(cap);
+                pos = self.edge_heap[ei].node1;
             }
 
             let mut pos = t;
             while pos != s {
                 let ei = last_edge[pos];
-                let cap = self.edge_heap[ei].capacity;
-                self.edge_heap[ei].capacity -= cap;
-                self.edge_heap[ei ^ 1].capacity += cap;
+                self.edge_heap[ei].capacity -= flow;
+                self.edge_heap[ei ^ 1].capacity += flow;
                 pos = self.edge_heap[ei].node1;
             }
-            true
+            flow
         }
 
-        pub fn mark_reachable(&self, s: usize, out: &mut [bool]) {
+        pub fn mark_reachable_any(&self, s: usize, out: &mut [bool]) {
             if out[s] {
                 return;
             }
             out[s] = true;
             for &ei in &self.edge_idx[s] {
-                self.mark_reachable(self.edge_heap[ei].node2, out);
+                self.mark_reachable_any(self.edge_heap[ei].node2, out);
             }
         }
     }
