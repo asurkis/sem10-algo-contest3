@@ -17,33 +17,18 @@ fn main() {
 }
 
 fn solve(pfun: &[usize]) -> Vec<usize> {
+    // z[i] = k => p[i + k - 1] >= k
+    // p[i] = k => z[i - k + 1] >= k
     let n = pfun.len();
     let mut zfun = vec![0; n];
-    zfun[0] = n;
     // a b a c a b a a
     // 0 0 1 0 1 2 3 1
     // 8 0 1 0 3 0 1 1
-    for i in 1..n {
-        let mut not_zero = false;
-        if pfun[i] == 1 {
-            not_zero = true;
-        } else if pfun[i] == pfun[i - 1] + 1 && pfun[pfun[i - 1]] == 1 {
-            not_zero = true;
-        }
-        if !not_zero {
-            continue;
-        }
-        zfun[i] = 1;
-        let mut j = i + 1;
-        if j >= n {
-            continue;
-        }
-        debug!(i, j, pfun[j], pfun[j - 1], pfun[pfun[j]]);
-        while j < n && pfun[j] == pfun[j - 1] + 1 && pfun[pfun[j]] == 1 {
-            zfun[i] += 1;
-            j += 1;
-            debug!(i, j, pfun[j], pfun[j - 1], pfun[pfun[j]]);
-        }
+    zfun[0] = n;
+    for i in 0..n {
+        let k = pfun[i];
+        let j = i + 1 - k;
+        zfun[j] = zfun[j].max(k);
     }
     zfun
 }
