@@ -45,8 +45,8 @@ impl Order {
 
     fn precedes(self, that: Order) -> bool {
         self.epoch
-            + self.sx.abs_diff(self.tx)
-            + self.sy.abs_diff(self.ty)
+            + self.tx.abs_diff(self.sx)
+            + self.ty.abs_diff(self.sy)
             + self.tx.abs_diff(that.sx)
             + self.ty.abs_diff(that.sy)
             < that.epoch
@@ -78,7 +78,9 @@ fn solve(orders: &[Order]) -> usize {
     let mut g = Graph::new(n);
     for ei in og_edges {
         let e = h.get_edge(ei);
-        g.add_edge(e.node1, e.node2 - n);
+        if e.capacity == 0 {
+            g.add_edge(e.node1, e.node2 - n);
+        }
     }
 
     let mut reachable = vec![false; n];
