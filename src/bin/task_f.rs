@@ -161,6 +161,14 @@ mod tests {
         assert_eq!(1, actual);
     }
 
+    #[test]
+    fn test_my2() {
+        // a.
+        // .b
+        let actual = solve([2, 2], [1, 1], [2, 2], &[], &[[1, 2], [2, 1]]);
+        assert_eq!(2, actual);
+    }
+
     fn gen_input(
         [max_m, max_n]: [usize; 2],
     ) -> impl Strategy<
