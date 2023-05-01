@@ -50,6 +50,10 @@ fn solve(lines: &[&str]) -> bool {
         }
     }
 
+    if total_cap == 0 {
+        return false;
+    }
+
     for i in 0..n {
         for j in 1..m {
             let wrap1 = i * m + j - 1;
