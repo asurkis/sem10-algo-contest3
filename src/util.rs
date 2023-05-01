@@ -118,6 +118,11 @@ impl Graph {
         self.add_one_edge(node1, node2, capacity, true)
     }
 
+    pub fn add_biedge(&mut self, node1: usize, node2: usize, capacity: Capacity) -> usize {
+        self.add_one_edge(node2, node1, capacity, false);
+        self.add_one_edge(node1, node2, capacity, true)
+    }
+
     fn add_one_edge(
         &mut self,
         node1: usize,
