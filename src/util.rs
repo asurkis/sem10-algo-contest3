@@ -43,7 +43,7 @@ pub const fn ceil2(x: usize) -> usize {
     }
 }
 
-pub fn calc_zfun_inplace(s: &[char], z: &mut [usize]) {
+pub fn calc_zfun_inplace(s: &[impl Eq], z: &mut [usize]) {
     let n = s.len();
     assert_eq!(n, z.len());
     if n == 0 {
@@ -73,7 +73,7 @@ pub fn calc_zfun_inplace(s: &[char], z: &mut [usize]) {
     }
 }
 
-pub fn calc_zfun(s: &[char]) -> Vec<usize> {
+pub fn calc_zfun(s: &[impl Eq]) -> Vec<usize> {
     let mut zfun = vec![0; s.len()];
     calc_zfun_inplace(s, &mut zfun);
     zfun
