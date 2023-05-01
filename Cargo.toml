@@ -7,3 +7,8 @@ edition = "2021"
 
 [dependencies]
 proptest = "1.1.0"
+
+[lib]
+name = "util"
+path = "src/util.rs"
+
