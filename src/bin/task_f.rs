@@ -94,32 +94,15 @@ fn solve(
     }
 
     let mut answer = 0;
-    while g.mark_subflow(wrap_s, wrap_t) != 0 {
-        answer += 1;
-    }
-    debug!("After subflows");
-    for ei in 0..g.n_edges() {
-        debug!(ei, g.edge(ei));
-    }
-
-    let mut reachable = vec![false; g.n_nodes()];
-    debug_assert!(!reachable[wrap_t]);
-    g.mark_reachable_capable(wrap_s, &mut reachable);
-    debug!(&reachable);
-    for ei in 0..g.n_edges() {
-        let e1 = g.edge(ei);
-        let e2 = g.edge(ei ^ 1);
-        debug_assert_eq!(e1.node1, e2.node2);
-        debug_assert_eq!(e1.node2, e2.node1);
-        if e1.is_real
-            && reachable[e1.node1]
-            && !reachable[e1.node2]
-            && e1.capacity + e2.capacity == Capacity::MAX
-        {
+    while {
+        let subflow = g.mark_subflow(wrap_s, wrap_t);
+        if subflow > 2 {
             return -1;
         }
+        subflow != 0
+    } {
+        answer += 1;
     }
-
     answer
 }
 
