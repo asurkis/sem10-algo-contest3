@@ -1,7 +1,13 @@
 use util::{calc_zfun, debug};
 
 fn main() {
-    debug!(1; 2);
+    let mut line = String::new();
+    std::io::stdin().read_line(&mut line).unwrap();
+    let answer = solve(line.trim());
+    for x in answer {
+        print!("{x} ");
+    }
+    println!();
 }
 
 fn solve(input: &str) -> Vec<usize> {
@@ -14,6 +20,9 @@ fn solve(input: &str) -> Vec<usize> {
     let mut answer = vec![0; n];
     for k in 0..n {
         for cand in 0..=k {
+            if zfun[k - cand] < cand {
+                continue;
+            }
             let mut cand_passes = true;
             for i in 0..=k {
                 let j_begin = (cand + 1).max(i + 1) - (cand + 1);

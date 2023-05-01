@@ -46,7 +46,13 @@ pub const fn ceil2(x: usize) -> usize {
 pub fn calc_zfun_inplace(s: &[char], z: &mut [usize]) {
     let n = s.len();
     assert_eq!(n, z.len());
+    if n == 0 {
+        return;
+    }
     z[0] = n;
+    if n == 1 {
+        return;
+    }
     let mut l = 1;
     let mut r = 1;
     z[1] = r - l;
