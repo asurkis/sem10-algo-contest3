@@ -39,9 +39,6 @@ fn solve(lines: &[&str]) -> bool {
                 'C' => 4,
                 _ => panic!("Unexpected char {c}"),
             };
-            if cap == 0 {
-                continue;
-            }
             total_cap += cap;
             g.add_edge(2 * wrap, 2 * wrap + 1, cap);
 
@@ -100,7 +97,7 @@ mod tests {
         // OO..
         // ========
         // Valid
-        let answer = solve(&["HOH.".to_string(), "NCOH".to_string(), "OO..".to_string()]);
+        let answer = solve(&["HOH.", "NCOH", "OO.."]);
         assert!(answer);
     }
 
@@ -112,7 +109,7 @@ mod tests {
         // OONH
         // ========
         // Invalid
-        let answer = solve(&["HOH.".to_owned(), "NCOH".to_owned(), "OONH".to_owned()]);
+        let answer = solve(&["HOH.", "NCOH", "OONH"]);
         assert!(!answer);
     }
 }
