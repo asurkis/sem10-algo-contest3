@@ -1,3 +1,5 @@
+use util::calc_zfun;
+
 fn main() {
     let mut lines = std::io::stdin().lines().map(|s| {
         s.unwrap()
@@ -20,16 +22,20 @@ fn solve(pfun: &[usize]) -> Vec<usize> {
     // z[i] = k => p[i + k - 1] >= k
     // p[i] = k => z[i - k + 1] >= k
     let n = pfun.len();
-    let mut zfun = vec![0; n];
     // a b a c a b a a
     // 0 0 1 0 1 2 3 1
     // 8 0 1 0 3 0 1 1
-    zfun[0] = n;
-    for i in 0..n {
-        let k = pfun[i];
-        let j = i + 1 - k;
-        zfun[j] = zfun[j].max(k);
+    let mut new_char = 1;
+    let mut string = vec![0; n];
+    for i in 1..n {
+        if pfun[i] == 0 {
+            string[i] = new_char;
+            new_char += 1;
+        } else {
+            string[i] = string[pfun[i] - 1];
+        }
     }
+    let zfun = calc_zfun(&string);
     zfun
 }
 
