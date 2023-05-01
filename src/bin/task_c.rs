@@ -40,13 +40,8 @@ fn solve(lines: &[&str]) -> bool {
                 _ => panic!("Unexpected char {c}"),
             };
             total_cap += cap;
-            g.add_edge(2 * wrap, 2 * wrap + 1, cap);
-
-            if (i + j) % 2 == 0 {
-                g.add_edge(s, 2 * wrap, cap);
-            } else {
-                g.add_edge(2 * wrap + 1, t, cap);
-            }
+            g.add_edge(s, 2 * wrap, cap);
+            g.add_edge(2 * wrap + 1, t, cap);
         }
     }
 
@@ -54,11 +49,8 @@ fn solve(lines: &[&str]) -> bool {
         for j in 1..m {
             let wrap1 = i * m + j - 1;
             let wrap2 = i * m + j;
-            if (i + j) % 2 == 0 {
-                g.add_edge(2 * wrap2 + 1, 2 * wrap1, 1);
-            } else {
-                g.add_edge(2 * wrap1 + 1, 2 * wrap2, 1);
-            }
+            g.add_edge(2 * wrap2, 2 * wrap1 + 1, 1);
+            g.add_edge(2 * wrap1, 2 * wrap2 + 1, 1);
         }
     }
 
@@ -66,11 +58,8 @@ fn solve(lines: &[&str]) -> bool {
         for j in 0..m {
             let wrap1 = (i - 1) * m + j;
             let wrap2 = i * m + j;
-            if (i + j) % 2 == 0 {
-                g.add_edge(2 * wrap2 + 1, 2 * wrap1, 1);
-            } else {
-                g.add_edge(2 * wrap1 + 1, 2 * wrap2, 1);
-            }
+            g.add_edge(2 * wrap2, 2 * wrap1 + 1, 1);
+            g.add_edge(2 * wrap1, 2 * wrap2 + 1, 1);
         }
     }
 
@@ -82,7 +71,7 @@ fn solve(lines: &[&str]) -> bool {
     } {}
 
     debug!(achieved, total_cap);
-    2 * achieved == total_cap
+    achieved == total_cap
 }
 
 #[cfg(test)]
@@ -111,6 +100,13 @@ mod tests {
         // Invalid
         let answer = solve(&["HOH.", "NCOH", "OONH"]);
         assert!(!answer);
+    }
+
+    #[test]
+    fn test_my1() {
+        // .
+        let answer = solve(&["."]);
+        assert!(answer);
     }
 }
 
