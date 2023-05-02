@@ -3,16 +3,16 @@ use std::collections::VecDeque;
 // #[cfg(test)]
 #[macro_export]
 macro_rules! debug {
-        ($($($val:expr),+);*) => {
+    ($($($val:expr),+);*) => {
+        $(
+            eprint!("[{}:{}]", file!(), line!());
             $(
-                eprint!("[{}:{}]", file!(), line!());
-                $(
-                    eprint!("  {} = {:?}", stringify!($val), $val);
-                )*
-                eprintln!();
+                eprint!("  {} = {:?}", stringify!($val), $val);
             )*
-        };
-    }
+            eprintln!();
+        )*
+    };
+}
 
 /*
 #[cfg(not(test))]
