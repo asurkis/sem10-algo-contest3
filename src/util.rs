@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-#[cfg(test)]
+// #[cfg(test)]
 #[macro_export]
 macro_rules! debug {
         ($($($val:expr),+);*) => {
@@ -14,11 +14,13 @@ macro_rules! debug {
         };
     }
 
+/*
 #[cfg(not(test))]
 #[macro_export]
 macro_rules! debug {
     ($($($val:expr),+);*) => {};
 }
+*/
 
 const fn ilog2_acc(x: usize, acc: u32) -> u32 {
     if x == 1 {
