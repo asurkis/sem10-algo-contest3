@@ -78,12 +78,7 @@ fn solve(lines: &[&str]) -> bool {
         }
     }
 
-    let mut achieved = 0;
-    while {
-        let flow = g.mark_subflow(s, t);
-        achieved += flow;
-        flow != 0
-    } {}
+    let achieved = g.max_flow(s, t);
 
     debug!(achieved, total_cap);
     2 * achieved == total_cap

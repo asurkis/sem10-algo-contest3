@@ -73,7 +73,7 @@ fn solve(orders: &[Order]) -> usize {
         h.add_edge(n + i, t, 1);
     }
 
-    while h.mark_subflow(s, t) != 0 {}
+    h.max_flow(s, t);
 
     let mut g = Graph::new(n);
     for ei in og_edges {

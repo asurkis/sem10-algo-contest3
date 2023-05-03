@@ -51,7 +51,7 @@ fn solve(n: usize, m: usize, edges: &[Vec<usize>]) -> Vec<[usize; 2]> {
         g.add_edge(u, t, 1);
     }
 
-    while g.mark_subflow(s, t) != 0 {}
+    g.max_flow(s, t);
 
     let mut answer = Vec::new();
     for i in init_edges {

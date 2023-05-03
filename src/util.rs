@@ -192,6 +192,16 @@ impl Graph {
         flow
     }
 
+    pub fn max_flow(&mut self, s: usize, t: usize) -> Capacity {
+        let mut flow = 0;
+        while {
+            let sub = self.mark_subflow(s, t);
+            flow += sub;
+            sub != 0
+        } {}
+        flow
+    }
+
     pub fn mark_reachable(&self, s: usize, out: &mut [bool], filter: &impl Fn(&Edge) -> bool) {
         if out[s] {
             return;

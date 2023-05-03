@@ -100,10 +100,9 @@ fn solve(
         if subflow > 2 {
             return -1;
         }
+        answer += subflow as i64;
         subflow != 0
-    } {
-        answer += 1;
-    }
+    } {}
     answer
 }
 

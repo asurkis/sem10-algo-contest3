@@ -57,14 +57,7 @@ fn solve([n, m]: [usize; 2], [w, b, g]: [u32; 3], painting: &[&str]) -> u32 {
         }
     }
 
-    let mut answer = 0;
-    while {
-        let flow = graph.mark_subflow(s, t);
-        answer += flow;
-        flow != 0
-    } {}
-
-    answer
+    graph.max_flow(s, t)
 }
 
 #[cfg(test)]

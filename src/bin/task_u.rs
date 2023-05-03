@@ -10,7 +10,7 @@ fn solve(input: &str) -> usize {
     let s: Vec<char> = input.chars().collect();
     let n = s.len();
     let zfun = calc_zfun(&s);
-    for i in 0..n {
+    for i in 1..n {
         if i + zfun[i] == n {
             return i;
         }

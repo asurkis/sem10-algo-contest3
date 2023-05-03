@@ -61,13 +61,7 @@ fn solve(
         total += free_matches;
     }
 
-    let mut max_flow = 0;
-    while {
-        let flow = graph.mark_subflow(s, t);
-        max_flow += flow;
-        flow != 0
-    } {}
-
+    let max_flow = graph.max_flow(s, t);
     max_flow == total
 }
 
