@@ -1,4 +1,4 @@
-use util::{debug, Capacity, Graph};
+use util::{debug, Capacity::*, Graph};
 
 fn main() {
     let mut lines = std::io::stdin().lines().map(|s| {
@@ -49,61 +49,54 @@ fn solve(
     // wrap = x + m * y
     // v_in = 2 * wrap
     // v_out = v_in + 1
-    let mut is_mountain = vec![false; n * m];
     let mut can_wall = vec![false; n * m];
-    for &[x, y] in mountains {
-        is_mountain[(x - 1) + m * (y - 1)] = true;
-    }
+    let mut is_mountain = vec![false; n * m];
     for &[x, y] in wall_options {
         can_wall[(x - 1) + m * (y - 1)] = true;
     }
-    let mut g = Graph::new(2 * n * m);
+    for &[x, y] in mountains {
+        is_mountain[(x - 1) + m * (y - 1)] = true;
+    }
+
+    let mut graph = Graph::new(2 * m * n);
+    let wrap_s = (xa - 1) + m * (ya - 1);
+    let wrap_t = (xb - 1) + m * (yb - 1);
+
     for y in 0..n {
         for x in 0..m {
             let wrap = x + m * y;
-            let capacity = if can_wall[wrap] { 1 } else { Capacity::MAX };
-            g.add_edge(2 * wrap, 2 * wrap + 1, capacity);
+            let cap = if is_mountain[wrap] {
+                Finite(0)
+            } else if can_wall[wrap] {
+                Finite(1)
+            } else {
+                Infinite
+            };
+            graph.add_edge(2 * wrap, 2 * wrap + 1, cap);
         }
     }
     for y in 0..n {
         for x in 1..m {
             let wrap1 = (x - 1) + m * y;
             let wrap2 = x + m * y;
-            if !is_mountain[wrap1] && !is_mountain[wrap2] {
-                g.add_edge(2 * wrap1 + 1, 2 * wrap2, Capacity::MAX);
-                g.add_edge(2 * wrap2 + 1, 2 * wrap1, Capacity::MAX);
-            }
+            graph.add_edge(2 * wrap1 + 1, 2 * wrap2, Infinite);
+            graph.add_edge(2 * wrap2 + 1, 2 * wrap1, Infinite);
         }
     }
     for y in 1..n {
         for x in 0..m {
             let wrap1 = x + m * (y - 1);
             let wrap2 = x + m * y;
-            if !is_mountain[wrap1] && !is_mountain[wrap2] {
-                g.add_edge(2 * wrap1 + 1, 2 * wrap2, Capacity::MAX);
-                g.add_edge(2 * wrap2 + 1, 2 * wrap1, Capacity::MAX);
-            }
+            graph.add_edge(2 * wrap1 + 1, 2 * wrap2, Infinite);
+            graph.add_edge(2 * wrap2 + 1, 2 * wrap1, Infinite);
         }
     }
 
-    let wrap_s = 2 * ((xa - 1) + m * (ya - 1));
-    let wrap_t = 2 * ((xb - 1) + m * (yb - 1)) + 1;
-    debug!("Before subflows");
-    #[cfg(test)]
-    for ei in 0..g.n_edges() {
-        debug!(ei, g.edge(ei));
+    let flow = graph.max_flow(2 * wrap_s, 2 * wrap_t + 1);
+    match flow {
+        Finite(x) => x as i64,
+        Infinite => -1,
     }
-
-    let mut answer = 0;
-    while {
-        let subflow = g.mark_subflow(wrap_s, wrap_t);
-        if subflow > 2 {
-            return -1;
-        }
-        answer += subflow as i64;
-        subflow != 0
-    } {}
-    answer
 }
 
 #[cfg(test)]
@@ -216,7 +209,7 @@ mod tests {
                 let wrap1 = (x - 1) + m * y;
                 let wrap2 = x + m * y;
                 if is_passable[wrap1] && is_passable[wrap2] {
-                    g.add_edge(wrap1, wrap2, 1);
+                    g.add_edge(wrap1, wrap2, Finite(1));
                 }
             }
         }
@@ -225,7 +218,7 @@ mod tests {
                 let wrap1 = x + m * (y - 1);
                 let wrap2 = x + m * y;
                 if is_passable[wrap1] && is_passable[wrap2] {
-                    g.add_edge(wrap1, wrap2, 1);
+                    g.add_edge(wrap1, wrap2, Finite(1));
                 }
             }
         }

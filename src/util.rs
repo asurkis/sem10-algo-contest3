@@ -271,7 +271,11 @@ impl Graph {
         while {
             let sub = self.mark_subflow(s, t);
             flow += sub;
-            sub != Finite(0)
+            match sub {
+                Finite(0) => false,
+                Finite(_) => true,
+                Infinite => false,
+            }
         } {}
         flow
     }
