@@ -1,4 +1,4 @@
-use util::{debug, Graph};
+use util::{debug, Capacity::*, Graph};
 
 fn main() {
     let mut lines = std::io::stdin().lines().map(|s| s.unwrap());
@@ -24,21 +24,21 @@ fn solve(lines: &[&str]) -> bool {
         debug_assert_eq!(m, lines[i].len());
     }
 
-    let mut total_cap = 0;
+    let mut total_cap = Finite(0);
     let mut g = Graph::new(2 * n * m + 2);
     let s = 2 * n * m;
     let t = s + 1;
     for i in 0..n {
         for (j, c) in lines[i].chars().enumerate() {
             let wrap = i * m + j;
-            let cap = match c {
+            let cap = Finite(match c {
                 '.' => 0,
                 'H' => 1,
                 'O' => 2,
                 'N' => 3,
                 'C' => 4,
                 _ => panic!("Unexpected char {c}"),
-            };
+            });
             total_cap += cap;
             g.add_edge(2 * wrap, 2 * wrap + 1, cap);
 
@@ -50,7 +50,7 @@ fn solve(lines: &[&str]) -> bool {
         }
     }
 
-    if total_cap == 0 {
+    if total_cap == Finite(0) {
         return false;
     }
 
@@ -59,9 +59,9 @@ fn solve(lines: &[&str]) -> bool {
             let wrap1 = i * m + j - 1;
             let wrap2 = i * m + j;
             if (i + j) % 2 == 0 {
-                g.add_edge(2 * wrap2 + 1, 2 * wrap1, 1);
+                g.add_edge(2 * wrap2 + 1, 2 * wrap1, Finite(1));
             } else {
-                g.add_edge(2 * wrap1 + 1, 2 * wrap2, 1);
+                g.add_edge(2 * wrap1 + 1, 2 * wrap2, Finite(1));
             }
         }
     }
@@ -71,9 +71,9 @@ fn solve(lines: &[&str]) -> bool {
             let wrap1 = (i - 1) * m + j;
             let wrap2 = i * m + j;
             if (i + j) % 2 == 0 {
-                g.add_edge(2 * wrap2 + 1, 2 * wrap1, 1);
+                g.add_edge(2 * wrap2 + 1, 2 * wrap1, Finite(1));
             } else {
-                g.add_edge(2 * wrap1 + 1, 2 * wrap2, 1);
+                g.add_edge(2 * wrap1 + 1, 2 * wrap2, Finite(1));
             }
         }
     }
@@ -81,7 +81,7 @@ fn solve(lines: &[&str]) -> bool {
     let achieved = g.max_flow(s, t);
 
     debug!(achieved, total_cap);
-    2 * achieved == total_cap
+    2 * achieved.unwrap() == total_cap.unwrap()
 }
 
 #[cfg(test)]

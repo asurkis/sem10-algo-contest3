@@ -1,4 +1,8 @@
-use std::collections::VecDeque;
+use std::{
+    cmp::Ordering,
+    collections::VecDeque,
+    ops::{Add, AddAssign, Sub, SubAssign},
+};
 
 // #[cfg(test)]
 #[macro_export]
@@ -81,7 +85,77 @@ pub fn calc_zfun(s: &[impl Eq]) -> Vec<usize> {
     zfun
 }
 
-pub type Capacity = u32;
+use Capacity::*;
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Ord)]
+pub enum Capacity {
+    Finite(u64),
+    Infinite,
+}
+
+impl Capacity {
+    pub fn unwrap(self) -> u64 {
+        match self {
+            Finite(x) => x,
+            Infinite => panic!(),
+        }
+    }
+}
+
+impl PartialOrd for Capacity {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        match self {
+            Finite(x) => match other {
+                Finite(y) => x.partial_cmp(y),
+                Infinite => Some(Ordering::Less),
+            },
+            Infinite => match other {
+                Finite(_) => Some(Ordering::Greater),
+                Infinite => Some(Ordering::Equal),
+            },
+        }
+    }
+}
+
+impl Add for Capacity {
+    type Output = Capacity;
+    fn add(self, rhs: Self) -> Self::Output {
+        match self {
+            Finite(x) => match rhs {
+                Finite(y) => Finite(x + y),
+                Infinite => Infinite,
+            },
+            Infinite => Infinite,
+        }
+    }
+}
+
+impl Sub for Capacity {
+    type Output = Capacity;
+    fn sub(self, rhs: Self) -> Self::Output {
+        match self {
+            Finite(x) => match rhs {
+                Finite(y) => Finite(x - y),
+                Infinite => unreachable!(),
+            },
+            Infinite => match rhs {
+                Finite(_) => Infinite,
+                Infinite => Infinite,
+            },
+        }
+    }
+}
+
+impl AddAssign for Capacity {
+    fn add_assign(&mut self, rhs: Self) {
+        *self = *self + rhs;
+    }
+}
+
+impl SubAssign for Capacity {
+    fn sub_assign(&mut self, rhs: Self) {
+        *self = *self - rhs;
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Edge {
@@ -116,7 +190,7 @@ impl Graph {
     }
 
     pub fn add_edge(&mut self, node1: usize, node2: usize, capacity: Capacity) -> usize {
-        self.add_one_edge(node2, node1, 0, false);
+        self.add_one_edge(node2, node1, Finite(0), false);
         self.add_one_edge(node1, node2, capacity, true)
     }
 
@@ -158,7 +232,7 @@ impl Graph {
             let v = queue.pop_front().unwrap();
             for &ei in &self.edge_idx[v] {
                 let e = self.edge_heap[ei];
-                if e.capacity == 0 {
+                if e.capacity == Finite(0) {
                     continue;
                 }
                 if last_edge[e.node2] != usize::MAX {
@@ -170,10 +244,10 @@ impl Graph {
         }
 
         if last_edge[t] == usize::MAX {
-            return 0;
+            return Finite(0);
         }
 
-        let mut flow = Capacity::MAX;
+        let mut flow = Infinite;
         let mut pos = t;
         while pos != s {
             let ei = last_edge[pos];
@@ -193,11 +267,11 @@ impl Graph {
     }
 
     pub fn max_flow(&mut self, s: usize, t: usize) -> Capacity {
-        let mut flow = 0;
+        let mut flow = Finite(0);
         while {
             let sub = self.mark_subflow(s, t);
             flow += sub;
-            sub != 0
+            sub != Finite(0)
         } {}
         flow
     }
@@ -221,6 +295,6 @@ impl Graph {
     }
 
     pub fn mark_reachable_capable(&self, s: usize, out: &mut [bool]) {
-        self.mark_reachable(s, out, &|e| e.capacity != 0 && e.is_real);
+        self.mark_reachable(s, out, &|e| e.capacity != Finite(0) && e.is_real);
     }
 }

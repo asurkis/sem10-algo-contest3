@@ -1,4 +1,4 @@
-use util::Graph;
+use util::{Capacity::*, Graph};
 
 fn main() {
     let mut lines = std::io::stdin().lines().map(|s| s.unwrap());
@@ -11,16 +11,16 @@ fn main() {
         .collect();
     let n = first_line[0] as usize;
     let m = first_line[1] as usize;
-    let w = first_line[2] as u32;
-    let b = first_line[3] as u32;
-    let g = first_line[4] as u32;
+    let w = first_line[2] as u64;
+    let b = first_line[3] as u64;
+    let g = first_line[4] as u64;
     let painting: Vec<String> = lines.take(n).collect();
     let painting_str: Vec<&str> = painting.iter().map(|s| s.trim()).collect();
     let answer = solve([n, m], [w, b, g], &painting_str);
     println!("{answer}");
 }
 
-fn solve([n, m]: [usize; 2], [w, b, g]: [u32; 3], painting: &[&str]) -> u32 {
+fn solve([n, m]: [usize; 2], [w, b, g]: [u64; 3], painting: &[&str]) -> u64 {
     debug_assert_eq!(n, painting.len());
     for i in 0..n {
         debug_assert_eq!(m, painting[i].len());
@@ -34,8 +34,8 @@ fn solve([n, m]: [usize; 2], [w, b, g]: [u32; 3], painting: &[&str]) -> u32 {
         for (j, c) in painting[i].chars().enumerate() {
             let wrap = i * m + j;
             match c {
-                'B' => graph.add_edge(s, wrap, w),
-                'W' => graph.add_edge(wrap, t, b),
+                'B' => graph.add_edge(s, wrap, Finite(w)),
+                'W' => graph.add_edge(wrap, t, Finite(b)),
                 _ => panic!("Unknown color {c}"),
             };
         }
@@ -45,7 +45,7 @@ fn solve([n, m]: [usize; 2], [w, b, g]: [u32; 3], painting: &[&str]) -> u32 {
         for j in 1..m {
             let wrap1 = i * m + j - 1;
             let wrap2 = i * m + j;
-            graph.add_biedge(wrap1, wrap2, g);
+            graph.add_biedge(wrap1, wrap2, Finite(g));
         }
     }
 
@@ -53,11 +53,11 @@ fn solve([n, m]: [usize; 2], [w, b, g]: [u32; 3], painting: &[&str]) -> u32 {
         for j in 0..m {
             let wrap1 = (i - 1) * m + j;
             let wrap2 = i * m + j;
-            graph.add_biedge(wrap1, wrap2, g);
+            graph.add_biedge(wrap1, wrap2, Finite(g));
         }
     }
 
-    graph.max_flow(s, t)
+    graph.max_flow(s, t).unwrap()
 }
 
 #[cfg(test)]

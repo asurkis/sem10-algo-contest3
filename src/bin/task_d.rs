@@ -1,4 +1,4 @@
-use util::Graph;
+use util::{Capacity::*, Graph};
 
 fn main() {
     let mut lines = std::io::stdin().lines().map(|s| s.unwrap());
@@ -62,15 +62,15 @@ fn solve(orders: &[Order]) -> usize {
     for i in 0..n {
         for j in 0..n {
             if orders[i].precedes(orders[j]) {
-                let pos = h.add_edge(i, n + j, 1);
+                let pos = h.add_edge(i, n + j, Finite(1));
                 og_edges.push(pos);
             }
         }
     }
     for i in 0..n {
-        h.add_edge(s, i, 1);
+        h.add_edge(s, i, Finite(1));
         // g.add_edge(n + i, i);
-        h.add_edge(n + i, t, 1);
+        h.add_edge(n + i, t, Finite(1));
     }
 
     h.max_flow(s, t);
@@ -78,8 +78,8 @@ fn solve(orders: &[Order]) -> usize {
     let mut g = Graph::new(n);
     for ei in og_edges {
         let e = h.edge(ei);
-        if e.capacity == 0 {
-            g.add_edge(e.node1, e.node2 - n, 1);
+        if e.capacity == Finite(0) {
+            g.add_edge(e.node1, e.node2 - n, Finite(1));
         }
     }
 

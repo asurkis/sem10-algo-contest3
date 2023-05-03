@@ -1,4 +1,4 @@
-use util::Graph;
+use util::{Capacity::*, Graph};
 
 fn main() {
     let mut lines = std::io::stdin().lines().map(|s| {
@@ -37,11 +37,11 @@ fn solve(m: usize, n: usize, edges: &[Vec<usize>], max_pair: &[usize]) -> (Vec<u
     let mut graph = Graph::new(m + n);
     for i in 0..m {
         if max_pair[i] != 0 {
-            graph.add_edge(m + max_pair[i] - 1, i, 1);
+            graph.add_edge(m + max_pair[i] - 1, i, Finite(1));
         }
         for &j in &edges[i] {
             if j != max_pair[i] {
-                graph.add_edge(i, m + j - 1, 1);
+                graph.add_edge(i, m + j - 1, Finite(1));
             }
         }
     }

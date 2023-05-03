@@ -43,16 +43,6 @@ fn solve(pfun: &[usize]) -> Vec<usize> {
 mod tests {
     use super::*;
 
-    fn baseline(pfun: &[usize]) -> Vec<usize> {
-        todo!()
-    }
-
-    fn compare_with_baseline(pfun: &[usize]) {
-        let zfun = baseline(pfun);
-        let actual = solve(pfun);
-        assert_eq!(zfun, actual);
-    }
-
     #[test]
     fn test1() {
         // 8

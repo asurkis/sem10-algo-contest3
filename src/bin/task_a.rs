@@ -1,4 +1,4 @@
-use util::Graph;
+use util::{Capacity::*, Graph};
 
 fn main() {
     let mut lines = std::io::stdin().lines().map(|s| {
@@ -33,22 +33,22 @@ fn solve(n: usize, m: usize, edges: &[Vec<usize>]) -> Vec<[usize; 2]> {
     let mut init_edges = Vec::new();
     for v in 0..n {
         for &u in &edges[v] {
-            let pos = g.add_edge(v, n + u - 1, 1);
+            let pos = g.add_edge(v, n + u - 1, Finite(1));
             init_edges.push(pos);
         }
     }
 
     for v in 0..n {
         let u = n + m + v;
-        g.add_edge(s, u, 1);
-        g.add_edge(u, v, 1);
+        g.add_edge(s, u, Finite(1));
+        g.add_edge(u, v, Finite(1));
     }
 
     for v in 0..m {
         let v = n + v;
         let u = n + m + v;
-        g.add_edge(v, u, 1);
-        g.add_edge(u, t, 1);
+        g.add_edge(v, u, Finite(1));
+        g.add_edge(u, t, Finite(1));
     }
 
     g.max_flow(s, t);
@@ -56,7 +56,7 @@ fn solve(n: usize, m: usize, edges: &[Vec<usize>]) -> Vec<[usize; 2]> {
     let mut answer = Vec::new();
     for i in init_edges {
         let e = g.edge(i);
-        if e.capacity != 0 {
+        if e.capacity != Finite(0) {
             continue;
         }
         answer.push([e.node1 + 1, e.node2 - n + 1]);

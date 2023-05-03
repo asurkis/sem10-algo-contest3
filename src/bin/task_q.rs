@@ -33,6 +33,7 @@ fn solve(zfun: &[usize]) -> Vec<usize> {
 mod tests {
     use super::*;
 
+    #[allow(unused)]
     fn baseline(zfun: &[usize]) -> Vec<usize> {
         let n = zfun.len();
         let mut pfun = vec![0; n];
@@ -47,6 +48,7 @@ mod tests {
         pfun
     }
 
+    #[allow(unused)]
     fn compare_with_baseline(zfun: &[usize]) {
         let pfun = baseline(zfun);
         let actual = solve(zfun);

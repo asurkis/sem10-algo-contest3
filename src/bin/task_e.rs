@@ -88,7 +88,6 @@ fn solve(n: usize, s: usize, t: usize, edges_inp: &[[usize; 2]]) -> Option<[Vec<
 #[derive(Debug, Clone)]
 struct Graph {
     n_nodes: usize,
-    n_edges: usize,
     edges: Vec<Vec<Edge>>,
 }
 
@@ -123,7 +122,6 @@ impl Graph {
         }
         Self {
             n_nodes: n,
-            n_edges: edges_inp.len(),
             edges,
         }
     }

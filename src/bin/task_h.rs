@@ -1,7 +1,8 @@
-use util::{Capacity, Graph};
+use util::{Capacity::*, Graph};
+
+type Int = u64;
 
 fn main() {
-    type Int = u32;
     let lines: Vec<Vec<Int>> = std::io::stdin()
         .lines()
         .map(|s| {
@@ -24,12 +25,7 @@ fn main() {
     }
 }
 
-fn solve(
-    n: usize,
-    current_score: &[Capacity],
-    coming_games: &[Capacity],
-    games_mat: &[Vec<Capacity>],
-) -> bool {
+fn solve(n: usize, current_score: &[Int], coming_games: &[Int], games_mat: &[Vec<Int>]) -> bool {
     debug_assert_eq!(n, current_score.len());
     debug_assert_eq!(n, coming_games.len());
     debug_assert_eq!(n, games_mat.len());
@@ -52,17 +48,17 @@ fn solve(
 
         for j in 1..n {
             let games_ij = games_mat[i][j];
-            graph.add_edge(2 * i, 2 * j + 1, games_ij);
+            graph.add_edge(2 * i, 2 * j + 1, Finite(games_ij));
             free_matches += games_ij;
         }
 
-        graph.add_edge(s, 2 * i, allowed_wins);
-        graph.add_edge(2 * i + 1, t, free_matches);
+        graph.add_edge(s, 2 * i, Finite(allowed_wins));
+        graph.add_edge(2 * i + 1, t, Finite(free_matches));
         total += free_matches;
     }
 
     let max_flow = graph.max_flow(s, t);
-    max_flow == total
+    max_flow == Finite(total)
 }
 
 #[cfg(test)]
