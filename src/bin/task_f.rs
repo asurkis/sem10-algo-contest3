@@ -66,6 +66,26 @@ fn solve(
         is_mountain[(x - 1) + m * (y - 1)] = true;
     }
 
+    #[cfg(test)]
+    for y in 0..n {
+        for x in 0..m {
+            let wrap = x + m * y;
+            if is_mountain[wrap] {
+                print!("m");
+            } else if can_wall[wrap] {
+                print!("w");
+            } else if [x + 1, y + 1] == [xa, ya] {
+                print!("s");
+            } else if [x + 1, y + 1] == [xb, yb] {
+                print!("t");
+            } else {
+                print!(".");
+            }
+        }
+        println!();
+    }
+    println!();
+
     let mut graph = Graph::new(2 * m * n);
     let wrap_s = (xa - 1) + m * (ya - 1);
     let wrap_t = (xb - 1) + m * (yb - 1);
@@ -83,36 +103,63 @@ fn solve(
             graph.add_edge(2 * wrap, 2 * wrap + 1, cap);
         }
     }
+
     for y in 0..n {
-        for x in 1..m {
-            let wrap1 = (x - 1) + m * y;
-            let wrap2 = x + m * y;
-            graph.add_edge(2 * wrap1 + 1, 2 * wrap2, Infinite);
-            graph.add_edge(2 * wrap2 + 1, 2 * wrap1, Infinite);
-        }
-    }
-    for y in 1..n {
         for x in 0..m {
-            let wrap1 = x + m * (y - 1);
-            let wrap2 = x + m * y;
-            graph.add_edge(2 * wrap1 + 1, 2 * wrap2, Infinite);
-            graph.add_edge(2 * wrap2 + 1, 2 * wrap1, Infinite);
+            let wrap1 = x + m * y;
+            let wrap2 = wrap1 + 1;
+            let wrap3 = wrap1 + m;
+            if x + 1 < m {
+                graph.add_edge(2 * wrap1 + 1, 2 * wrap2, Infinite);
+                graph.add_edge(2 * wrap2 + 1, 2 * wrap1, Infinite);
+            }
+            if y + 1 < n {
+                graph.add_edge(2 * wrap1 + 1, 2 * wrap3, Infinite);
+                graph.add_edge(2 * wrap3 + 1, 2 * wrap1, Infinite);
+            }
         }
     }
 
     let flow = graph.max_flow(2 * wrap_s, 2 * wrap_t + 1);
     match flow {
         Finite(flow) => {
-            let reachable = graph.find_reachable_capable(wrap_s);
+            let reachable = graph.find_reachable_capable(2 * wrap_s);
+            let mut is_wall = vec![false; n * m];
+            for y in 0..n {
+                for x in 0..m {
+                    let wrap = x + m * y;
+                    if !can_wall[wrap] || !reachable[2 * wrap] {
+                        continue;
+                    }
+
+                    is_wall[wrap] = false
+                        || (x > 0 && !is_mountain[wrap - 1] && !reachable[2 * (wrap - 1)])
+                        || (y > 0 && !is_mountain[wrap - m] && !reachable[2 * (wrap - m)])
+                        || (x + 1 < m && !is_mountain[wrap + 1] && !reachable[2 * (wrap + 1)])
+                        || (y + 1 < n && !is_mountain[wrap + m] && !reachable[2 * (wrap + m)]);
+                }
+            }
             let mut answer = Vec::with_capacity(flow as usize);
             for y in 0..n {
                 for x in 0..m {
                     let wrap = x + m * y;
-                    if can_wall[wrap] && reachable[2 * wrap] && !reachable[2 * wrap + 1] {
+                    let taken = is_wall[wrap];
+                    if taken {
                         answer.push([x + 1, y + 1]);
                     }
+                    let r1 = reachable[2 * wrap];
+                    let r2 = reachable[2 * wrap + 1];
+                    let d = taken as u8 * 4 + r1 as u8 * 2 + r2 as u8;
+                    if is_mountain[wrap] {
+                        print!(".");
+                    } else {
+                        print!("{d}");
+                    }
                 }
+                println!();
             }
+            // dbg!(&graph, flow, &reachable, wrap_s, wrap_t, &answer);
+            assert_eq!(flow as usize, answer.len());
             Some(answer)
         }
         Infinite => None,
@@ -163,6 +210,58 @@ mod tests {
         // .b
         let actual = solve([2, 2], [1, 1], [2, 2], &[], &[[1, 2], [2, 1]]);
         assert_eq!(Some(vec![[2, 1], [1, 2]]), actual);
+    }
+
+    #[test]
+    fn test_my3() {
+        // (45, 2, [], [(1, 1), (2, 2)], (2, 1), (1, 2))
+        solve([2, 2], [2, 1], [1, 2], &[], &[[1, 1], [2, 2]]);
+    }
+
+    #[test]
+    fn test_my4() {
+        // (5, 7, [], [(1, 2), (1, 4), (1, 5), (1, 6), (1, 7), (2, 1), (2, 2)], (1, 3), (1, 1))
+        solve(
+            [5, 7],
+            [1, 3],
+            [1, 1],
+            &[],
+            &[[1, 2], [1, 4], [1, 5], [1, 6], [1, 7], [2, 1], [2, 2]],
+        );
+    }
+
+    #[test]
+    fn test_my5() {
+        // (5, 7, [(1, 1), (1, 4), (1, 5)], [(1, 2), (1, 7), (2, 1), (2, 2), (2, 4), (2, 5), (2, 6)], (1, 3), (1, 6))
+        solve(
+            [5, 7],
+            [1, 3],
+            [1, 6],
+            &[[1, 1], [1, 4], [1, 5]],
+            &[[1, 2], [1, 7], [2, 1], [2, 2], [2, 4], [2, 5], [2, 6]],
+        );
+    }
+
+    #[test]
+    fn test_my6() {
+        // (5, 7, [], [(1, 3), (1, 2), (1, 5), (1, 6), (1, 7), (2, 2), (2, 5), (2, 3), (2, 4)], (1, 1), (1, 4))
+        solve(
+            [5, 7],
+            [1, 1],
+            [1, 4],
+            &[],
+            &[
+                [1, 3],
+                [1, 2],
+                [1, 5],
+                [1, 6],
+                [1, 7],
+                [2, 2],
+                [2, 5],
+                [2, 3],
+                [2, 4],
+            ],
+        );
     }
 
     fn gen_input(
@@ -268,8 +367,6 @@ mod tests {
         } else {
             assert!(actual.is_some());
             let actual = actual.unwrap();
-            assert!(0 <= actual.len());
-            debug!(actual.len(), expected);
             assert!(actual.len() <= expected as usize);
         }
     }
