@@ -301,4 +301,18 @@ impl Graph {
     pub fn mark_reachable_capable(&self, s: usize, out: &mut [bool]) {
         self.mark_reachable(s, out, &|e| e.capacity != Finite(0) && e.is_real);
     }
+
+    pub fn find_reachable(&self, s: usize, filter: &impl Fn(&Edge) -> bool) -> Vec<bool> {
+        let mut out = vec![false; self.n_nodes()];
+        self.mark_reachable(s, &mut out, filter);
+        out
+    }
+
+    pub fn find_reachable_any(&self, s: usize) -> Vec<bool> {
+        self.find_reachable(s, &|_| true)
+    }
+
+    pub fn find_reachable_capable(&self, s: usize) -> Vec<bool> {
+        self.find_reachable(s, &|e| e.capacity != Finite(0) && e.is_real)
+    }
 }

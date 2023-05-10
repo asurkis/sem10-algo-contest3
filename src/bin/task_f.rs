@@ -1,4 +1,4 @@
-use util::{debug, Capacity::*, Graph};
+use util::{Capacity::*, Graph};
 
 fn main() {
     let mut lines = std::io::stdin().lines().map(|s| {
@@ -33,7 +33,15 @@ fn main() {
         &mountains,
         &wall_options,
     );
-    println!("{answer}");
+    match answer {
+        None => println!("-1"),
+        Some(answer) => {
+            println!("{}", answer.len());
+            for [x, y] in answer {
+                println!("{x} {y}");
+            }
+        }
+    }
 }
 
 fn solve(
@@ -42,9 +50,9 @@ fn solve(
     [xb, yb]: [usize; 2],
     mountains: &[[usize; 2]],
     wall_options: &[[usize; 2]],
-) -> i64 {
+) -> Option<Vec<[usize; 2]>> {
     if [xa, ya] == [xb, yb] {
-        return -1;
+        return None;
     }
     // wrap = x + m * y
     // v_in = 2 * wrap
@@ -94,8 +102,20 @@ fn solve(
 
     let flow = graph.max_flow(2 * wrap_s, 2 * wrap_t + 1);
     match flow {
-        Finite(x) => x as i64,
-        Infinite => -1,
+        Finite(flow) => {
+            let reachable = graph.find_reachable_capable(wrap_s);
+            let mut answer = Vec::with_capacity(flow as usize);
+            for y in 0..n {
+                for x in 0..m {
+                    let wrap = x + m * y;
+                    if can_wall[wrap] && reachable[2 * wrap] && !reachable[2 * wrap + 1] {
+                        answer.push([x + 1, y + 1]);
+                    }
+                }
+            }
+            Some(answer)
+        }
+        Infinite => None,
     }
 }
 
@@ -113,7 +133,7 @@ mod tests {
         // ========
         // -1
         let actual = solve([1, 2], [1, 1], [1, 2], &[], &[]);
-        assert_eq!(-1, actual);
+        assert_eq!(None, actual);
     }
 
     #[test]
@@ -127,14 +147,14 @@ mod tests {
         // ========
         // 0
         let actual = solve([2, 2], [1, 1], [2, 2], &[[1, 2], [2, 1]], &[]);
-        assert_eq!(0, actual);
+        assert_eq!(Some(vec![]), actual);
     }
 
     #[test]
     fn test_my1() {
         // a.b
         let actual = solve([3, 1], [1, 1], [3, 1], &[], &[[2, 1]]);
-        assert_eq!(1, actual);
+        assert_eq!(Some(vec![[2, 1]]), actual);
     }
 
     #[test]
@@ -142,7 +162,7 @@ mod tests {
         // a.
         // .b
         let actual = solve([2, 2], [1, 1], [2, 2], &[], &[[1, 2], [2, 1]]);
-        assert_eq!(2, actual);
+        assert_eq!(Some(vec![[2, 1], [1, 2]]), actual);
     }
 
     fn gen_input(
@@ -244,11 +264,13 @@ mod tests {
         let expected = check_passability(mn, a, b, &mountains, &wall_options);
         let actual = solve(mn, a, b, &mountains, &wall_options);
         if expected == -1 {
-            assert_eq!(-1, actual);
+            assert!(actual.is_none());
         } else {
-            assert_ne!(-1, actual);
-            assert!(0 <= actual);
-            assert!(actual <= expected);
+            assert!(actual.is_some());
+            let actual = actual.unwrap();
+            assert!(0 <= actual.len());
+            debug!(actual.len(), expected);
+            assert!(actual.len() <= expected as usize);
         }
     }
 
