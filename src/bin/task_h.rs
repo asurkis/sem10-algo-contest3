@@ -33,28 +33,38 @@ fn solve(n: usize, current_score: &[Int], coming_games: &[Int], games_mat: &[Vec
         debug_assert_eq!(n, games_mat[i].len());
     }
 
+    // (n - 1) * (n - 2) / 2 + 2 * (n - 1) = (n - 1) * (n + 2) / 2
+    // 1 0 => 0
+    // 2 0 => 1
+    // 2 1 => 2
+    // 3 0 => 3
+    // 3 1 => 4
+    // ...
+
+    let s = (n - 1) * (n + 2) / 2;
+    let t = s + 1;
+    let mut graph = Graph::new(t + 1);
+
     let max_wins = current_score[0] + coming_games[0];
-    let mut graph = Graph::new(2 * n);
-    let s = 0;
-    let t = 1;
     let mut total = 0;
 
     for i in 1..n {
         if current_score[i] > max_wins {
             return false;
         }
+
         let allowed_wins = max_wins - current_score[i];
-        let mut free_matches = 0;
+        graph.add_edge(i - 1, t, Finite(allowed_wins));
 
-        for j in 1..n {
+        for j in 1..i {
+            let wrap_edge = (i - 1) * (i - 2) / 2 + j - 1;
+            let ev = wrap_edge + n - 1;
             let games_ij = games_mat[i][j];
-            graph.add_edge(2 * i, 2 * j + 1, Finite(games_ij));
-            free_matches += games_ij;
+            graph.add_edge(s, ev, Finite(games_ij));
+            graph.add_edge(ev, i - 1, Infinite);
+            graph.add_edge(ev, j - 1, Infinite);
+            total += games_ij;
         }
-
-        graph.add_edge(s, 2 * i, Finite(allowed_wins));
-        graph.add_edge(2 * i + 1, t, Finite(free_matches));
-        total += free_matches;
     }
 
     let max_flow = graph.max_flow(s, t);
