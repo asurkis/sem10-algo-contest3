@@ -84,6 +84,7 @@ fn solve(
         }
         println!();
     }
+    #[cfg(test)]
     println!();
 
     let mut graph = Graph::new(2 * m * n);
@@ -150,12 +151,14 @@ fn solve(
                     let r1 = reachable[2 * wrap];
                     let r2 = reachable[2 * wrap + 1];
                     let d = taken as u8 * 4 + r1 as u8 * 2 + r2 as u8;
+                    #[cfg(test)]
                     if is_mountain[wrap] {
                         print!(".");
                     } else {
                         print!("{d}");
                     }
                 }
+                #[cfg(test)]
                 println!();
             }
             // dbg!(&graph, flow, &reachable, wrap_s, wrap_t, &answer);

@@ -313,6 +313,6 @@ impl Graph {
     }
 
     pub fn find_reachable_capable(&self, s: usize) -> Vec<bool> {
-        self.find_reachable(s, &|e| e.capacity != Finite(0) && e.is_real)
+        self.find_reachable(s, &|e| e.capacity != Finite(0))
     }
 }
