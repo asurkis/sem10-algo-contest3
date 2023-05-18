@@ -61,8 +61,8 @@ fn solve(n: usize, current_score: &[Int], coming_games: &[Int], games_mat: &[Vec
             let ev = wrap_edge + n - 1;
             let games_ij = games_mat[i][j];
             graph.add_edge(s, ev, Finite(games_ij));
-            graph.add_edge(ev, i - 1, Infinite);
-            graph.add_edge(ev, j - 1, Infinite);
+            graph.add_edge(ev, i - 1, Infinity);
+            graph.add_edge(ev, j - 1, Infinity);
             total += games_ij;
         }
     }

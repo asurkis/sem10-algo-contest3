@@ -114,14 +114,14 @@ use Capacity::*;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Ord)]
 pub enum Capacity {
     Finite(u64),
-    Infinite,
+    Infinity,
 }
 
 impl Capacity {
     pub fn unwrap(self) -> u64 {
         match self {
             Finite(x) => x,
-            Infinite => panic!(),
+            Infinity => panic!(),
         }
     }
 }
@@ -131,11 +131,11 @@ impl PartialOrd for Capacity {
         match self {
             Finite(x) => match other {
                 Finite(y) => x.partial_cmp(y),
-                Infinite => Some(Ordering::Less),
+                Infinity => Some(Ordering::Less),
             },
-            Infinite => match other {
+            Infinity => match other {
                 Finite(_) => Some(Ordering::Greater),
-                Infinite => Some(Ordering::Equal),
+                Infinity => Some(Ordering::Equal),
             },
         }
     }
@@ -147,9 +147,9 @@ impl Add for Capacity {
         match self {
             Finite(x) => match rhs {
                 Finite(y) => Finite(x + y),
-                Infinite => Infinite,
+                Infinity => Infinity,
             },
-            Infinite => Infinite,
+            Infinity => Infinity,
         }
     }
 }
@@ -160,11 +160,11 @@ impl Sub for Capacity {
         match self {
             Finite(x) => match rhs {
                 Finite(y) => Finite(x - y),
-                Infinite => unreachable!(),
+                Infinity => unreachable!(),
             },
-            Infinite => match rhs {
-                Finite(_) => Infinite,
-                Infinite => Infinite,
+            Infinity => match rhs {
+                Finite(_) => Infinity,
+                Infinity => Infinity,
             },
         }
     }
@@ -272,7 +272,7 @@ impl Graph {
             return Finite(0);
         }
 
-        let mut flow = Infinite;
+        let mut flow = Infinity;
         let mut pos = t;
         while pos != s {
             let ei = last_edge[pos];
@@ -299,7 +299,7 @@ impl Graph {
             match sub {
                 Finite(0) => false,
                 Finite(_) => true,
-                Infinite => false,
+                Infinity => false,
             }
         } {}
         flow

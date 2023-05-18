@@ -99,7 +99,7 @@ fn solve(
             } else if can_wall[wrap] {
                 Finite(1)
             } else {
-                Infinite
+                Infinity
             };
             graph.add_edge(2 * wrap, 2 * wrap + 1, cap);
         }
@@ -111,12 +111,12 @@ fn solve(
             let wrap2 = wrap1 + 1;
             let wrap3 = wrap1 + m;
             if x + 1 < m {
-                graph.add_edge(2 * wrap1 + 1, 2 * wrap2, Infinite);
-                graph.add_edge(2 * wrap2 + 1, 2 * wrap1, Infinite);
+                graph.add_edge(2 * wrap1 + 1, 2 * wrap2, Infinity);
+                graph.add_edge(2 * wrap2 + 1, 2 * wrap1, Infinity);
             }
             if y + 1 < n {
-                graph.add_edge(2 * wrap1 + 1, 2 * wrap3, Infinite);
-                graph.add_edge(2 * wrap3 + 1, 2 * wrap1, Infinite);
+                graph.add_edge(2 * wrap1 + 1, 2 * wrap3, Infinity);
+                graph.add_edge(2 * wrap3 + 1, 2 * wrap1, Infinity);
             }
         }
     }
@@ -165,7 +165,7 @@ fn solve(
             assert_eq!(flow as usize, answer.len());
             Some(answer)
         }
-        Infinite => None,
+        Infinity => None,
     }
 }
 
