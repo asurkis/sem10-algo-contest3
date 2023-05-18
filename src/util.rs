@@ -93,15 +93,14 @@ pub fn calc_pfun_inplace(s: &[impl Eq], p: &mut [usize]) {
     }
     p[0] = 0;
     for i in 1..n {
-        if s[i] == s[p[i - 1]] {
-            p[i] = p[i - 1] + 1;
-        } else {
-            let mut j = p[i - 1];
-            while j != 0 && s[j] != s[i] {
-                j = p[j];
-            }
-            p[i] = j;
+        let mut k = p[i - 1];
+        while k != 0 && s[i] != s[k] {
+            k = p[k - 1];
         }
+        if s[i] == s[k] {
+            k += 1;
+        }
+        p[i] = k;
     }
 }
 
