@@ -85,6 +85,32 @@ pub fn calc_zfun(s: &[impl Eq]) -> Vec<usize> {
     zfun
 }
 
+pub fn calc_pfun_inplace(s: &[impl Eq], p: &mut [usize]) {
+    let n = s.len();
+    assert_eq!(n, p.len());
+    if n == 0 {
+        return;
+    }
+    p[0] = 0;
+    for i in 1..n {
+        if s[i] == s[p[i - 1]] {
+            p[i] = p[i - 1] + 1;
+        } else {
+            let mut j = p[i - 1];
+            while j != 0 && s[j] != s[i] {
+                j = p[j];
+            }
+            p[i] = j;
+        }
+    }
+}
+
+pub fn calc_pfun(s: &[impl Eq]) -> Vec<usize> {
+    let mut pfun = vec![0; s.len()];
+    calc_pfun_inplace(s, &mut pfun);
+    pfun
+}
+
 use Capacity::*;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Ord)]
 pub enum Capacity {
@@ -314,5 +340,17 @@ impl Graph {
 
     pub fn find_reachable_capable(&self, s: usize) -> Vec<bool> {
         self.find_reachable(s, &|e| e.capacity != Finite(0))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_pfun() {
+        let chars: Vec<char> = "abcabcd".chars().collect();
+        let pfun1 = calc_pfun(&chars);
+        assert_eq!(vec![0, 0, 0, 1, 2, 3, 0], pfun1);
     }
 }
