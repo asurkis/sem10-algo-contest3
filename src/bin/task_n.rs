@@ -20,13 +20,18 @@ fn solve(a_str: &str, b_str: &str) -> String {
     let sb2: Vec<char> = b_str.chars().rev().collect();
     let mut pat1 = vec![' '; n + m];
     let mut pat2 = vec![' '; n + m];
-    pat1[0..m].copy_from_slice(&sb1);
-    pat2[0..m].copy_from_slice(&sb2);
-    pat1[m..m + n].copy_from_slice(&sa1);
-    pat2[m..m + n].copy_from_slice(&sa2);
+    pat1[..m].copy_from_slice(&sb1);
+    pat2[..m].copy_from_slice(&sb2);
+    pat1[m..].copy_from_slice(&sa1);
+    pat2[m..].copy_from_slice(&sa2);
 
     let zfun1 = calc_zfun(&pat1);
     let zfun2 = calc_zfun(&pat2);
+
+    let pat1s: String = pat1.iter().collect();
+    let pat2s: String = pat2.iter().collect();
+    debug!(a_str; b_str; pat1s; pat2s; &zfun1; &zfun2);
+
     // debug!(&pat1; &zfun1);
     for i in 0..n {
         // debug!(i, m + i, zfun1[m + i], m);
@@ -64,12 +69,16 @@ fn try_find(sa: &[char], sb: &[char], zfun: &[usize]) -> String {
     let m = sb.len();
     assert_eq!(n + m, zfun.len());
     let mut cand = Vec::new();
+    let c1: String = sa.iter().collect();
+    let c2: String = sb.iter().collect();
+    debug!(c1, c2; zfun);
     for i in 0..n {
-        let len = zfun[m + i];
-        if i + len == n + m {
+        let len = zfun[m + i].min(m);
+        if i + len == n {
+            debug!(i, len, m, n);
             cand = vec![' '; n + m - len];
             cand[0..n].copy_from_slice(&sa);
-            cand[n..n + m - len].copy_from_slice(&sb[m - len..m]);
+            cand[n..n + m - len].copy_from_slice(&sb[len..m]);
             break;
         }
     }
@@ -78,6 +87,8 @@ fn try_find(sa: &[char], sb: &[char], zfun: &[usize]) -> String {
         cand[0..n].copy_from_slice(&sa);
         cand[n..n + m].copy_from_slice(&sb);
     }
+    let c3: String = cand.iter().collect();
+    debug!(c3);
     find_period(&cand)
 }
 
@@ -118,5 +129,19 @@ mod tests {
         let answer = solve("a", "b");
         debug!(answer);
         assert!(answer == "ab" || answer == "ba");
+    }
+
+    #[test]
+    fn test_my1() {
+        let answer = solve("abcd", "bcde");
+        debug!(answer);
+        assert!(answer == "abcde");
+    }
+
+    #[test]
+    fn test_my2() {
+        let answer = solve("bcde", "abcd");
+        debug!(answer);
+        assert!(answer == "bcdea");
     }
 }
