@@ -1,5 +1,4 @@
-use util::calc_zfun;
-use util::debug;
+use util::*;
 
 fn main() {
     let mut line = String::new();
@@ -12,19 +11,35 @@ fn main() {
 }
 
 fn solve(input: &str) -> Vec<usize> {
-    // forall i : exists j | i - k < j <= i && zfun[j] >= k
-    // k -> min
     let s: Vec<char> = input.chars().collect();
     let n = s.len();
     let zfun = calc_zfun(&s);
+    let pfun = calc_pfun(&s);
+    let mut min_nocheck = 1;
+    let mut max_nocheck = 0;
     debug!(&zfun);
     let mut answer = vec![0; n];
     answer[0] = 1;
     for k in 1..n {
-        for cand in 1..=k + 1 {
+        for cand in min_nocheck..=max_nocheck {
+            if cand > pfun[k] {
+                break;
+            }
+            answer[k] = cand;
+            break;
+        }
+
+        for cand in 1..=pfun[k] {
             if zfun[k + 1 - cand] < cand {
                 continue;
             }
+            if min_nocheck <= cand && cand <= max_nocheck {
+                continue;
+            }
+
+            let mut min_nocheck_new = usize::MAX;
+            let mut max_nocheck_new = cand;
+
             let mut r = 0;
             let mut cand_passes = true;
             for i in 0..=k {
@@ -38,10 +53,14 @@ fn solve(input: &str) -> Vec<usize> {
             }
             if cand_passes {
                 answer[k] = cand;
+                min_nocheck = min_nocheck_new;
+                max_nocheck = max_nocheck_new;
                 break;
             }
         }
-        debug_assert_ne!(0, answer[k]);
+        if answer[k] == 0 {
+            answer[k] = k + 1;
+        }
     }
     answer
 }
